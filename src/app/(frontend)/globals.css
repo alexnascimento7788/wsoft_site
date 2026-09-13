@@ -1,0 +1,115 @@
+@import 'tailwindcss';
+
+@config '../../../tailwind.config.mjs';
+
+@custom-variant sm (@media (width >= theme(--breakpoint-sm)));
+@custom-variant md (@media (width >= theme(--breakpoint-md)));
+@custom-variant lg (@media (width >= theme(--breakpoint-lg)));
+@custom-variant xl (@media (width >= theme(--breakpoint-xl)));
+@custom-variant 2xl (@media (width >= theme(--breakpoint-2xl)));
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: unset;
+    font-size: unset;
+  }
+}
+
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 86rem;
+  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans);
+}
+
+@utility wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+
+  @variant md {
+    padding-inline: 2rem;
+  }
+}
+
+:root {
+  --background: oklch(97.8% 0.012 80deg); /* #FAF7F1 */
+  --foreground: oklch(24% 0.02 60deg);
+  --card: oklch(100% 0 0deg);
+  --card-foreground: oklch(24% 0.02 60deg);
+  --primary: oklch(68% 0.19 45deg); /* #F4791F */
+  --primary-hover: oklch(61% 0.19 43deg); /* #E0650C */
+  --primary-foreground: oklch(100% 0 0deg);
+  --muted: oklch(94% 0.01 80deg);
+  --muted-foreground: oklch(45% 0.02 60deg);
+  --border: oklch(90% 0.015 75deg);
+  --ring: oklch(68% 0.19 45deg);
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+  }
+}
+
+@keyframes hero-fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-fade-slide-up {
+  animation: hero-fade-slide-up 0.8s ease both;
+}
+
+@keyframes cta-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 103, 26, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(232, 103, 26, 0);
+  }
+}
+
+.cta-pulse {
+  animation: cta-pulse 2.2s ease-in-out infinite;
+}
