@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { BarChart3, Cloud, FileSignature, Receipt, ShieldCheck, Warehouse } from 'lucide-react'
 
+import { EbookBanner } from '@/components/EbookBanner'
 import { SiagWebLogo } from '@/components/SiagWebLogo'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 
@@ -90,6 +91,8 @@ export default async function SiagWebPage() {
           </div>
         </div>
       </section>
+
+      <EbookBanner background="#F2F2F2" className="pb-20" />
 
       {/* Destaque SaaS */}
       <section className="bg-[#1A3A1A] py-20 text-center text-white">

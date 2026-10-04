@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
 import { AnimatedCounter } from '@/components/AnimatedCounter'
+import { EbookBanner } from '@/components/EbookBanner'
 import { Media } from '@/components/Media'
 import { SiagWebHighlight } from '@/components/SiagWebHighlight'
 import { getCachedGlobal } from '@/utilities/getGlobals'
@@ -82,6 +83,8 @@ export default async function HomePage() {
       </section>
 
       <SiagWebHighlight href="/produtos/siagweb" />
+
+      <EbookBanner background="linear-gradient(to right, #FFFFFF, #F0F7EE)" className="pb-16" />
 
       <div
         className="h-10"

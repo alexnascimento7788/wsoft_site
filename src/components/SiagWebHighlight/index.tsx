@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import React, { useEffect, useRef, useState } from 'react'
-import { Cloud, Globe, ShieldCheck } from 'lucide-react'
+import { BookOpen, Cloud, Globe, ShieldCheck } from 'lucide-react'
 
 import { SiagWebLogo } from '@/components/SiagWebLogo'
 
@@ -51,12 +51,21 @@ export function SiagWebHighlight({ href }: { href: string }) {
             O único sistema da WSoft 100% web e em nuvem — acesse de qualquer lugar, sem
             instalação, sem servidor local.
           </p>
-          <Link
-            href={href}
-            className="mt-6 inline-flex items-center justify-center rounded-md bg-[#E8671A] px-5 py-2 text-sm font-bold text-white transition-transform duration-300 hover:scale-105"
-          >
-            Saiba mais
-          </Link>
+          <div className="mt-6 flex flex-wrap items-center gap-4">
+            <Link
+              href={href}
+              className="inline-flex items-center justify-center rounded-md bg-[#E8671A] px-5 py-2 text-sm font-bold text-white transition-transform duration-300 hover:scale-105"
+            >
+              Saiba mais
+            </Link>
+            <a
+              href="#ebook"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#2E7D32] hover:underline"
+            >
+              <BookOpen className="h-4 w-4" />
+              Baixe o e-book grátis
+            </a>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
