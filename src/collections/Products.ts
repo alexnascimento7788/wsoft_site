@@ -4,7 +4,7 @@ import { FixedToolbarFeature, InlineToolbarFeature, lexicalEditor } from '@paylo
 import { revalidatePath } from 'next/cache'
 
 import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
+import { hideFromNonAdmins, isAdmin } from '../access/roles'
 
 const revalidate = (slug?: string | null) => {
   try {
@@ -28,12 +28,13 @@ const revalidateProductDelete: CollectionAfterDeleteHook = ({ doc }) => {
 export const Products: CollectionConfig = {
   slug: 'products',
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: isAdmin,
+    delete: isAdmin,
     read: anyone,
-    update: authenticated,
+    update: isAdmin,
   },
   admin: {
+    hidden: hideFromNonAdmins,
     useAsTitle: 'name',
     defaultColumns: ['name', 'status', 'order'],
   },

@@ -1,7 +1,7 @@
 import type { GlobalAfterChangeHook, GlobalConfig } from 'payload'
 import { revalidatePath } from 'next/cache'
 
-import { authenticated } from '../access/authenticated'
+import { hideFromNonAdmins, isAdmin } from '../access/roles'
 import { anyone } from '../access/anyone'
 
 const revalidateSiteSettings: GlobalAfterChangeHook = ({ doc }) => {
@@ -18,7 +18,10 @@ export const SiteSettings: GlobalConfig = {
   label: 'Configurações do Site',
   access: {
     read: anyone,
-    update: authenticated,
+    update: isAdmin,
+  },
+  admin: {
+    hidden: hideFromNonAdmins,
   },
   hooks: {
     afterChange: [revalidateSiteSettings],

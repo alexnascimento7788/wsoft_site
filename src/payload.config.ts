@@ -5,8 +5,13 @@ import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Media } from './collections/Media'
+import { CentrosDeCusto } from './collections/Orcamento/CentrosDeCusto'
+import { Contas } from './collections/Orcamento/Contas'
+import { Despesas } from './collections/Orcamento/Despesas'
+import { Fornecedores } from './collections/Orcamento/Fornecedores'
 import { Products } from './collections/Products'
 import { Users } from './collections/Users'
+import { ConfiguracaoOrcamento } from './globals/ConfiguracaoOrcamento'
 import { SiteSettings } from './globals/SiteSettings'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
@@ -20,6 +25,15 @@ export default buildConfig({
     components: {
       beforeLogin: ['@/components/BeforeLogin'],
       beforeDashboard: ['@/components/BeforeDashboard'],
+      beforeNavLinks: ['@/components/admin/OrcamentoNavLink'],
+      views: {
+        orcamento: {
+          Component: '@/components/admin/OrcamentoView',
+          path: '/orcamento',
+          exact: true,
+          meta: { title: 'Painel do orçamento' },
+        },
+      },
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -31,10 +45,13 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI,
     },
+    // Schema só muda via migrations (src/migrations) — ver README "Banco de dados".
+    push: false,
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
-  collections: [Products, Media, Users],
+  collections: [Products, Media, Users, CentrosDeCusto, Contas, Fornecedores, Despesas],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [SiteSettings],
+  globals: [SiteSettings, ConfiguracaoOrcamento],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',
   sharp,

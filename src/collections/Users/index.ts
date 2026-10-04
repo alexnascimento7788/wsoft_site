@@ -1,18 +1,24 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../../access/authenticated'
+import {
+  hideFromNonAdmins,
+  isAdmin,
+  isAdminField,
+  isAdminOrSelf,
+} from '../../access/roles'
 
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: authenticated,
-    create: authenticated,
-    delete: authenticated,
-    read: authenticated,
-    update: authenticated,
+    admin: ({ req }) => Boolean(req.user),
+    create: isAdmin,
+    delete: isAdmin,
+    read: isAdminOrSelf,
+    update: isAdminOrSelf,
   },
   admin: {
-    defaultColumns: ['name', 'email'],
+    defaultColumns: ['name', 'email', 'role'],
+    hidden: hideFromNonAdmins,
     useAsTitle: 'name',
   },
   auth: true,
@@ -20,6 +26,23 @@ export const Users: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+    },
+    {
+      name: 'role',
+      label: 'Perfil',
+      type: 'select',
+      required: true,
+      defaultValue: 'financeiro',
+      options: [
+        { label: 'Administrador (site + orçamento + usuários)', value: 'admin' },
+        { label: 'Financeiro (edita o orçamento)', value: 'financeiro' },
+        { label: 'Consulta (só visualiza o orçamento)', value: 'consulta' },
+      ],
+      access: {
+        create: isAdminField,
+        update: isAdminField,
+      },
+      admin: { position: 'sidebar' },
     },
   ],
   timestamps: true,
