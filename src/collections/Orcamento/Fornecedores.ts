@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { canEditBudget, canReadBudget } from '../../access/roles'
+import { canEditBudget, canReadBudget, hideFromNonBudget } from '../../access/roles'
 
 export const Fornecedores: CollectionConfig = {
   slug: 'fornecedores',
@@ -13,6 +13,7 @@ export const Fornecedores: CollectionConfig = {
   },
   admin: {
     group: 'Orçamento',
+    hidden: hideFromNonBudget,
     useAsTitle: 'nome',
     defaultColumns: ['nome', 'documento', 'email', 'telefone'],
   },

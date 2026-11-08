@@ -1,6 +1,6 @@
 import type { CollectionBeforeChangeHook, CollectionConfig, Field } from 'payload'
 
-import { canEditBudget, canReadBudget } from '../../access/roles'
+import { canEditBudget, canReadBudget, hideFromNonBudget } from '../../access/roles'
 import { MESES, somaMeses } from './meses'
 
 const moedaCell = '@/components/admin/MoedaCell'
@@ -63,6 +63,7 @@ export const Despesas: CollectionConfig = {
   },
   admin: {
     group: 'Orçamento',
+    hidden: hideFromNonBudget,
     useAsTitle: 'descricao',
     defaultColumns: [
       'descricao',

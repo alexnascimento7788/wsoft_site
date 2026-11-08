@@ -271,6 +271,15 @@ export interface Media {
 export interface User {
   id: number;
   name?: string | null;
+  telefone?: string | null;
+  /**
+   * Uma pessoa pode ter mais de um perfil (ex.: vendedor e apresentador).
+   */
+  roles: ('admin' | 'financeiro' | 'consulta' | 'crm_admin' | 'vendedor' | 'apresentador')[];
+  /**
+   * Inativo não recebe novos leads; o histórico mantém o nome.
+   */
+  ativo?: boolean | null;
   role: 'admin' | 'financeiro' | 'consulta';
   updatedAt: string;
   createdAt: string;
@@ -629,6 +638,9 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  telefone?: T;
+  roles?: T;
+  ativo?: T;
   role?: T;
   updatedAt?: T;
   createdAt?: T;

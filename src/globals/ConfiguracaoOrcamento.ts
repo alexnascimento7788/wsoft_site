@@ -1,6 +1,6 @@
 import type { GlobalConfig } from 'payload'
 
-import { canEditBudget, canReadBudget } from '../access/roles'
+import { canEditBudget, canReadBudget, hideFromNonBudget } from '../access/roles'
 import { MESES } from '../collections/Orcamento/meses'
 
 export const ConfiguracaoOrcamento: GlobalConfig = {
@@ -12,6 +12,7 @@ export const ConfiguracaoOrcamento: GlobalConfig = {
   },
   admin: {
     group: 'Orçamento',
+    hidden: hideFromNonBudget,
   },
   fields: [
     {
