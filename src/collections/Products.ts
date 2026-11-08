@@ -33,7 +33,9 @@ export const Products: CollectionConfig = {
     read: anyone,
     update: isAdmin,
   },
+  labels: { singular: 'Produto', plural: 'Produtos' },
   admin: {
+    group: 'Site',
     hidden: hideFromNonAdmins,
     useAsTitle: 'name',
     defaultColumns: ['name', 'status', 'order'],

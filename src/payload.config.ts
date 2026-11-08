@@ -49,9 +49,10 @@ export default buildConfig({
     push: false,
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
-  collections: [Products, Media, Users, CentrosDeCusto, Contas, Fornecedores, Despesas],
+  // A ordem define a ordem dos grupos no menu: Orçamento, (CRM), Site
+  collections: [CentrosDeCusto, Contas, Despesas, Fornecedores, Products, Media, Users],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [SiteSettings, ConfiguracaoOrcamento],
+  globals: [ConfiguracaoOrcamento, SiteSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',
   sharp,

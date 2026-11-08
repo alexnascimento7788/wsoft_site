@@ -22,7 +22,9 @@ export const Media: CollectionConfig = {
     read: anyone,
     update: isAdmin,
   },
+  labels: { singular: 'Mídia', plural: 'Mídia' },
   admin: {
+    group: 'Site',
     hidden: hideFromNonAdmins,
   },
   fields: [

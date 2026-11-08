@@ -21,6 +21,7 @@ export const SiteSettings: GlobalConfig = {
     update: isAdmin,
   },
   admin: {
+    group: 'Site',
     hidden: hideFromNonAdmins,
   },
   hooks: {

@@ -28,6 +28,7 @@ export const Users: CollectionConfig = {
     update: isAdminOrSelf,
   },
   admin: {
+    group: 'Site',
     defaultColumns: ['name', 'email', 'roles', 'ativo'],
     hidden: hideFromNonCrmAdmins,
     useAsTitle: 'name',

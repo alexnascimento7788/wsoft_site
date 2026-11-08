@@ -67,13 +67,13 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    'centros-de-custo': CentrosDeCusto;
+    contas: Conta;
+    despesas: Despesa;
+    fornecedores: Fornecedore;
     products: Product;
     media: Media;
     users: User;
-    'centros-de-custo': CentrosDeCusto;
-    contas: Conta;
-    fornecedores: Fornecedore;
-    despesas: Despesa;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -81,13 +81,13 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    'centros-de-custo': CentrosDeCustoSelect<false> | CentrosDeCustoSelect<true>;
+    contas: ContasSelect<false> | ContasSelect<true>;
+    despesas: DespesasSelect<false> | DespesasSelect<true>;
+    fornecedores: FornecedoresSelect<false> | FornecedoresSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
-    'centros-de-custo': CentrosDeCustoSelect<false> | CentrosDeCustoSelect<true>;
-    contas: ContasSelect<false> | ContasSelect<true>;
-    fornecedores: FornecedoresSelect<false> | FornecedoresSelect<true>;
-    despesas: DespesasSelect<false> | DespesasSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -98,12 +98,12 @@ export interface Config {
   };
   fallbackLocale: null;
   globals: {
-    'site-settings': SiteSetting;
     'configuracao-orcamento': ConfiguracaoOrcamento;
+    'site-settings': SiteSetting;
   };
   globalsSelect: {
-    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     'configuracao-orcamento': ConfiguracaoOrcamentoSelect<false> | ConfiguracaoOrcamentoSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -132,6 +132,172 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "centros-de-custo".
+ */
+export interface CentrosDeCusto {
+  id: number;
+  /**
+   * Ex.: 01, TI, ADM
+   */
+  codigo: string;
+  nome: string;
+  responsavel?: (number | null) | User;
+  descricao?: string | null;
+  ativo?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name?: string | null;
+  telefone?: string | null;
+  /**
+   * Uma pessoa pode ter mais de um perfil (ex.: vendedor e apresentador).
+   */
+  roles: ('admin' | 'financeiro' | 'consulta' | 'crm_admin' | 'vendedor' | 'apresentador')[];
+  /**
+   * Inativo não recebe novos leads; o histórico mantém o nome.
+   */
+  ativo?: boolean | null;
+  role: 'admin' | 'financeiro' | 'consulta';
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contas".
+ */
+export interface Conta {
+  id: number;
+  centroDeCusto: number | CentrosDeCusto;
+  /**
+   * Ex.: 3.1.01
+   */
+  codigo: string;
+  /**
+   * Ex.: Licenças de software, Cloud, Telefonia
+   */
+  nome: string;
+  descricao?: string | null;
+  ativo?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Cada despesa é uma linha do orçamento: conta, fornecedor e os valores orçado, realizado e previsto de cada mês do ano.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "despesas".
+ */
+export interface Despesa {
+  id: number;
+  /**
+   * Ex.: Microsoft 365 — 25 licenças
+   */
+  descricao: string;
+  ano: number;
+  conta: number | Conta;
+  fornecedor?: (number | null) | Fornecedore;
+  periodicidade: 'mensal' | 'anual' | 'eventual';
+  /**
+   * Ao salvar, preenche os meses do orçado que estiverem vazios.
+   */
+  valorMensal?: number | null;
+  orcado?: {
+    jan?: number | null;
+    fev?: number | null;
+    mar?: number | null;
+    abr?: number | null;
+    mai?: number | null;
+    jun?: number | null;
+    jul?: number | null;
+    ago?: number | null;
+    set?: number | null;
+    out?: number | null;
+    nov?: number | null;
+    dez?: number | null;
+  };
+  /**
+   * Preencha conforme os pagamentos de cada mês forem realizados.
+   */
+  realizado?: {
+    jan?: number | null;
+    fev?: number | null;
+    mar?: number | null;
+    abr?: number | null;
+    mai?: number | null;
+    jun?: number | null;
+    jul?: number | null;
+    ago?: number | null;
+    set?: number | null;
+    out?: number | null;
+    nov?: number | null;
+    dez?: number | null;
+  };
+  /**
+   * Quanto se espera gastar nos meses que ainda não fecharam (ex.: outubro). Entra na projeção do ano no lugar do orçado.
+   */
+  previsto?: {
+    jan?: number | null;
+    fev?: number | null;
+    mar?: number | null;
+    abr?: number | null;
+    mai?: number | null;
+    jun?: number | null;
+    jul?: number | null;
+    ago?: number | null;
+    set?: number | null;
+    out?: number | null;
+    nov?: number | null;
+    dez?: number | null;
+  };
+  observacoes?: string | null;
+  /**
+   * Definido automaticamente pela conta.
+   */
+  centroDeCusto?: (number | null) | CentrosDeCusto;
+  totalOrcado?: number | null;
+  totalRealizado?: number | null;
+  totalPrevisto?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fornecedores".
+ */
+export interface Fornecedore {
+  id: number;
+  nome: string;
+  documento?: string | null;
+  email?: string | null;
+  telefone?: string | null;
+  observacoes?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -266,172 +432,6 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  name?: string | null;
-  telefone?: string | null;
-  /**
-   * Uma pessoa pode ter mais de um perfil (ex.: vendedor e apresentador).
-   */
-  roles: ('admin' | 'financeiro' | 'consulta' | 'crm_admin' | 'vendedor' | 'apresentador')[];
-  /**
-   * Inativo não recebe novos leads; o histórico mantém o nome.
-   */
-  ativo?: boolean | null;
-  role: 'admin' | 'financeiro' | 'consulta';
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "centros-de-custo".
- */
-export interface CentrosDeCusto {
-  id: number;
-  /**
-   * Ex.: 01, TI, ADM
-   */
-  codigo: string;
-  nome: string;
-  responsavel?: (number | null) | User;
-  descricao?: string | null;
-  ativo?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "contas".
- */
-export interface Conta {
-  id: number;
-  centroDeCusto: number | CentrosDeCusto;
-  /**
-   * Ex.: 3.1.01
-   */
-  codigo: string;
-  /**
-   * Ex.: Licenças de software, Cloud, Telefonia
-   */
-  nome: string;
-  descricao?: string | null;
-  ativo?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fornecedores".
- */
-export interface Fornecedore {
-  id: number;
-  nome: string;
-  documento?: string | null;
-  email?: string | null;
-  telefone?: string | null;
-  observacoes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Cada despesa é uma linha do orçamento: conta, fornecedor e os valores orçado, realizado e previsto de cada mês do ano.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "despesas".
- */
-export interface Despesa {
-  id: number;
-  /**
-   * Ex.: Microsoft 365 — 25 licenças
-   */
-  descricao: string;
-  ano: number;
-  conta: number | Conta;
-  fornecedor?: (number | null) | Fornecedore;
-  periodicidade: 'mensal' | 'anual' | 'eventual';
-  /**
-   * Ao salvar, preenche os meses do orçado que estiverem vazios.
-   */
-  valorMensal?: number | null;
-  orcado?: {
-    jan?: number | null;
-    fev?: number | null;
-    mar?: number | null;
-    abr?: number | null;
-    mai?: number | null;
-    jun?: number | null;
-    jul?: number | null;
-    ago?: number | null;
-    set?: number | null;
-    out?: number | null;
-    nov?: number | null;
-    dez?: number | null;
-  };
-  /**
-   * Preencha conforme os pagamentos de cada mês forem realizados.
-   */
-  realizado?: {
-    jan?: number | null;
-    fev?: number | null;
-    mar?: number | null;
-    abr?: number | null;
-    mai?: number | null;
-    jun?: number | null;
-    jul?: number | null;
-    ago?: number | null;
-    set?: number | null;
-    out?: number | null;
-    nov?: number | null;
-    dez?: number | null;
-  };
-  /**
-   * Quanto se espera gastar nos meses que ainda não fecharam (ex.: outubro). Entra na projeção do ano no lugar do orçado.
-   */
-  previsto?: {
-    jan?: number | null;
-    fev?: number | null;
-    mar?: number | null;
-    abr?: number | null;
-    mai?: number | null;
-    jun?: number | null;
-    jul?: number | null;
-    ago?: number | null;
-    set?: number | null;
-    out?: number | null;
-    nov?: number | null;
-    dez?: number | null;
-  };
-  observacoes?: string | null;
-  /**
-   * Definido automaticamente pela conta.
-   */
-  centroDeCusto?: (number | null) | CentrosDeCusto;
-  totalOrcado?: number | null;
-  totalRealizado?: number | null;
-  totalPrevisto?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -455,6 +455,22 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'centros-de-custo';
+        value: number | CentrosDeCusto;
+      } | null)
+    | ({
+        relationTo: 'contas';
+        value: number | Conta;
+      } | null)
+    | ({
+        relationTo: 'despesas';
+        value: number | Despesa;
+      } | null)
+    | ({
+        relationTo: 'fornecedores';
+        value: number | Fornecedore;
+      } | null)
+    | ({
         relationTo: 'products';
         value: number | Product;
       } | null)
@@ -465,22 +481,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
-      } | null)
-    | ({
-        relationTo: 'centros-de-custo';
-        value: number | CentrosDeCusto;
-      } | null)
-    | ({
-        relationTo: 'contas';
-        value: number | Conta;
-      } | null)
-    | ({
-        relationTo: 'fornecedores';
-        value: number | Fornecedore;
-      } | null)
-    | ({
-        relationTo: 'despesas';
-        value: number | Despesa;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -523,6 +523,112 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "centros-de-custo_select".
+ */
+export interface CentrosDeCustoSelect<T extends boolean = true> {
+  codigo?: T;
+  nome?: T;
+  responsavel?: T;
+  descricao?: T;
+  ativo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contas_select".
+ */
+export interface ContasSelect<T extends boolean = true> {
+  centroDeCusto?: T;
+  codigo?: T;
+  nome?: T;
+  descricao?: T;
+  ativo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "despesas_select".
+ */
+export interface DespesasSelect<T extends boolean = true> {
+  descricao?: T;
+  ano?: T;
+  conta?: T;
+  fornecedor?: T;
+  periodicidade?: T;
+  valorMensal?: T;
+  orcado?:
+    | T
+    | {
+        jan?: T;
+        fev?: T;
+        mar?: T;
+        abr?: T;
+        mai?: T;
+        jun?: T;
+        jul?: T;
+        ago?: T;
+        set?: T;
+        out?: T;
+        nov?: T;
+        dez?: T;
+      };
+  realizado?:
+    | T
+    | {
+        jan?: T;
+        fev?: T;
+        mar?: T;
+        abr?: T;
+        mai?: T;
+        jun?: T;
+        jul?: T;
+        ago?: T;
+        set?: T;
+        out?: T;
+        nov?: T;
+        dez?: T;
+      };
+  previsto?:
+    | T
+    | {
+        jan?: T;
+        fev?: T;
+        mar?: T;
+        abr?: T;
+        mai?: T;
+        jun?: T;
+        jul?: T;
+        ago?: T;
+        set?: T;
+        out?: T;
+        nov?: T;
+        dez?: T;
+      };
+  observacoes?: T;
+  centroDeCusto?: T;
+  totalOrcado?: T;
+  totalRealizado?: T;
+  totalPrevisto?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fornecedores_select".
+ */
+export interface FornecedoresSelect<T extends boolean = true> {
+  nome?: T;
+  documento?: T;
+  email?: T;
+  telefone?: T;
+  observacoes?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -661,112 +767,6 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "centros-de-custo_select".
- */
-export interface CentrosDeCustoSelect<T extends boolean = true> {
-  codigo?: T;
-  nome?: T;
-  responsavel?: T;
-  descricao?: T;
-  ativo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "contas_select".
- */
-export interface ContasSelect<T extends boolean = true> {
-  centroDeCusto?: T;
-  codigo?: T;
-  nome?: T;
-  descricao?: T;
-  ativo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "fornecedores_select".
- */
-export interface FornecedoresSelect<T extends boolean = true> {
-  nome?: T;
-  documento?: T;
-  email?: T;
-  telefone?: T;
-  observacoes?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "despesas_select".
- */
-export interface DespesasSelect<T extends boolean = true> {
-  descricao?: T;
-  ano?: T;
-  conta?: T;
-  fornecedor?: T;
-  periodicidade?: T;
-  valorMensal?: T;
-  orcado?:
-    | T
-    | {
-        jan?: T;
-        fev?: T;
-        mar?: T;
-        abr?: T;
-        mai?: T;
-        jun?: T;
-        jul?: T;
-        ago?: T;
-        set?: T;
-        out?: T;
-        nov?: T;
-        dez?: T;
-      };
-  realizado?:
-    | T
-    | {
-        jan?: T;
-        fev?: T;
-        mar?: T;
-        abr?: T;
-        mai?: T;
-        jun?: T;
-        jul?: T;
-        ago?: T;
-        set?: T;
-        out?: T;
-        nov?: T;
-        dez?: T;
-      };
-  previsto?:
-    | T
-    | {
-        jan?: T;
-        fev?: T;
-        mar?: T;
-        abr?: T;
-        mai?: T;
-        jun?: T;
-        jul?: T;
-        ago?: T;
-        set?: T;
-        out?: T;
-        nov?: T;
-        dez?: T;
-      };
-  observacoes?: T;
-  centroDeCusto?: T;
-  totalOrcado?: T;
-  totalRealizado?: T;
-  totalPrevisto?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -807,6 +807,31 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "configuracao-orcamento".
+ */
+export interface ConfiguracaoOrcamento {
+  id: number;
+  /**
+   * Ano que o painel abre por padrão.
+   */
+  anoVigente: number;
+  /**
+   * Até qual mês o realizado está completo. Depois dele, o painel usa a previsão. Em branco = mês anterior ao atual.
+   */
+  mesFechado?: ('1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12') | null;
+  /**
+   * Conta ou centro de custo fica em "Atenção" ao atingir este % do orçado.
+   */
+  alertaPercentual: number;
+  /**
+   * Acima deste % do orçado, fica como "Estourado".
+   */
+  limitePercentual: number;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings".
  */
 export interface SiteSetting {
@@ -837,28 +862,16 @@ export interface SiteSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "configuracao-orcamento".
+ * via the `definition` "configuracao-orcamento_select".
  */
-export interface ConfiguracaoOrcamento {
-  id: number;
-  /**
-   * Ano que o painel abre por padrão.
-   */
-  anoVigente: number;
-  /**
-   * Até qual mês o realizado está completo. Depois dele, o painel usa a previsão. Em branco = mês anterior ao atual.
-   */
-  mesFechado?: ('1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12') | null;
-  /**
-   * Conta ou centro de custo fica em "Atenção" ao atingir este % do orçado.
-   */
-  alertaPercentual: number;
-  /**
-   * Acima deste % do orçado, fica como "Estourado".
-   */
-  limitePercentual: number;
-  updatedAt?: string | null;
-  createdAt?: string | null;
+export interface ConfiguracaoOrcamentoSelect<T extends boolean = true> {
+  anoVigente?: T;
+  mesFechado?: T;
+  alertaPercentual?: T;
+  limitePercentual?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -880,19 +893,6 @@ export interface SiteSettingsSelect<T extends boolean = true> {
         suffix?: T;
         id?: T;
       };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "configuracao-orcamento_select".
- */
-export interface ConfiguracaoOrcamentoSelect<T extends boolean = true> {
-  anoVigente?: T;
-  mesFechado?: T;
-  alertaPercentual?: T;
-  limitePercentual?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
