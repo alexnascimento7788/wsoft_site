@@ -33,7 +33,12 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
+      // Login com a identidade Wsoft, diferente para CRM, Orçamento e Administração
       beforeLogin: ['@/components/BeforeLogin'],
+      graphics: {
+        Logo: '@/components/admin/Login/Logo',
+        Icon: '@/components/admin/Login/Icon',
+      },
       beforeDashboard: ['@/components/BeforeDashboard'],
       // Menu próprio: cada bloco (Orçamento, CRM, Site) com o painel em cima e os itens embaixo
       Nav: '@/components/admin/Nav',
@@ -57,6 +62,9 @@ export default buildConfig({
           meta: { title: 'CRM' },
         },
       },
+    },
+    meta: {
+      titleSuffix: ' · Wsoft',
     },
     importMap: {
       baseDir: path.resolve(dirname),

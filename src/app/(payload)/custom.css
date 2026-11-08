@@ -1,0 +1,101 @@
+/* ——— Telas de login / senha com a identidade Wsoft ———
+   A cor muda conforme a área de destino: CRM (laranja), Orçamento (verde), Administração (grafite). */
+
+.template-minimal {
+  --wsoft-area: #f4791f;
+  --wsoft-area-escuro: #e0650c;
+  --wsoft-area-fundo: #fdf0e6;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 15%, var(--wsoft-area-fundo) 0, transparent 55%),
+    radial-gradient(circle at 85% 90%, var(--wsoft-area-fundo) 0, transparent 50%),
+    #faf7f1;
+}
+
+.template-minimal:has(.wsoft-login--orcamento) {
+  --wsoft-area: #1baf7a;
+  --wsoft-area-escuro: #128a5f;
+  --wsoft-area-fundo: #dff4eb;
+}
+
+.template-minimal:has(.wsoft-login--admin) {
+  --wsoft-area: #3f4a5a;
+  --wsoft-area-escuro: #2b3340;
+  --wsoft-area-fundo: #e6e9ee;
+}
+
+html[data-theme='dark'] .template-minimal {
+  background:
+    radial-gradient(circle at 15% 15%, color-mix(in srgb, var(--wsoft-area) 18%, transparent) 0, transparent 55%),
+    var(--theme-bg);
+}
+
+.template-minimal .template-minimal__wrap {
+  position: relative;
+  max-width: 440px;
+  padding: 36px 36px 28px;
+  border-radius: 18px;
+  background: var(--theme-elevation-0);
+  border-top: 5px solid var(--wsoft-area);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 4%),
+    0 18px 50px rgb(0 0 0 / 10%);
+}
+
+.template-minimal .login__brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.wsoft-login__logo {
+  height: 46px;
+  width: auto;
+}
+
+.wsoft-login {
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.wsoft-login h1 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--theme-elevation-800);
+}
+
+.wsoft-login h1 span {
+  color: var(--wsoft-area);
+}
+
+.wsoft-login p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--theme-elevation-600);
+}
+
+.template-minimal .btn--style-primary {
+  background-color: var(--wsoft-area);
+  border-color: var(--wsoft-area);
+  color: #fff;
+}
+
+.template-minimal .btn--style-primary:hover,
+.template-minimal .btn--style-primary:focus-visible {
+  background-color: var(--wsoft-area-escuro);
+  border-color: var(--wsoft-area-escuro);
+}
+
+.template-minimal a {
+  color: var(--wsoft-area-escuro);
+}
+
+/* Ícone do topo do admin */
+.wsoft-icon {
+  height: 18px;
+  width: auto;
+  display: block;
+}
