@@ -1,0 +1,217 @@
+.crm-contato {
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--theme-elevation-100);
+  border-left: 4px solid #f4791f;
+  background: var(--theme-elevation-0);
+  font-size: 13px;
+}
+
+.crm-contato--carregando {
+  color: var(--theme-elevation-500);
+}
+
+.crm-contato__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.crm-contato h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.crm-contato h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.crm-contato__status {
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  background: color-mix(in srgb, #f4791f 12%, transparent);
+  color: #c75a10;
+}
+
+.crm-contato__bloqueio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--theme-error-100);
+  color: var(--theme-error-600);
+}
+
+.crm-contato__vazio,
+.crm-contato__invalidos {
+  color: var(--theme-elevation-500);
+  font-size: 12px;
+}
+
+.crm-contato__canais {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.crm-contato__canais li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--theme-elevation-50);
+}
+
+.crm-contato__valor {
+  display: flex;
+  flex-direction: column;
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-contato__valor small {
+  font-size: 11px;
+  color: var(--theme-elevation-500);
+}
+
+.crm-contato__acoes {
+  display: flex;
+  gap: 6px;
+}
+
+.crm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-0);
+  color: var(--theme-elevation-800);
+  font-size: 12px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.crm-btn:hover {
+  background: var(--theme-elevation-50);
+}
+
+.crm-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.crm-btn--ligar {
+  color: #2563eb;
+  border-color: color-mix(in srgb, #2563eb 35%, transparent);
+}
+
+.crm-btn--whats {
+  color: #16a34a;
+  border-color: color-mix(in srgb, #16a34a 35%, transparent);
+}
+
+.crm-btn--email {
+  color: #7c3aed;
+  border-color: color-mix(in srgb, #7c3aed 35%, transparent);
+}
+
+.crm-btn--registrar {
+  background: #f4791f;
+  border-color: #f4791f;
+  color: #fff;
+}
+
+.crm-btn--registrar:hover {
+  background: #e0650c;
+}
+
+.crm-contato__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--theme-elevation-50);
+}
+
+.crm-contato__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--theme-elevation-600);
+  flex: 1;
+  min-width: 160px;
+}
+
+.crm-contato__form select,
+.crm-contato__form input,
+.crm-contato__form textarea {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-input-bg, var(--theme-elevation-0));
+  color: var(--theme-elevation-800);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.crm-contato__linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.crm-contato__aviso {
+  color: #c75a10;
+}
+
+.crm-contato__botoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.crm-contato__historico {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--theme-elevation-100);
+}
+
+.crm-contato__historico ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.crm-contato__historico li {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--theme-elevation-50);
+  font-size: 12px;
+}
+
+.crm-contato__quando,
+.crm-contato__quem {
+  color: var(--theme-elevation-500);
+  font-size: 11px;
+}
+
+.crm-contato__oque em {
+  display: block;
+  font-style: normal;
+  color: var(--theme-elevation-600);
+}

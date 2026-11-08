@@ -6,6 +6,7 @@ import { PREFERENCE_KEYS } from 'payload/shared'
 import React from 'react'
 
 import { canAccessCrmUser, canReadBudgetUser } from '@/access/roles'
+import { ThemeToggle } from '../ThemeToggle'
 import { PainelLink } from './PainelLink'
 
 type Props = ServerProps & { visibleEntities?: VisibleEntities }
@@ -91,6 +92,7 @@ export default async function Nav(props: Props) {
           navPreferences={prefs as NavPreferences}
         />
         <div className="nav__controls">
+          <ThemeToggle />
           <Logout />
         </div>
       </nav>

@@ -191,6 +191,51 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
     ).rejects.toThrow()
   })
 
+  it('registrar tentativa: lead vai para "Em contato", número inválido sai da fila, "Não contatar" e retorno', async () => {
+    const e = await criar({
+      collection: 'crm-empresas',
+      data: {
+        razaoSocial: 'EMPRESA FICTICIA EFEITOS LTDA',
+        cnpj: '00000000000999',
+        vendedor: u.vend1.id,
+        telefones: [{ numero: '3538221234', tipo: 'fixo' }, { numero: '35999998888', tipo: 'celular' }],
+      },
+    })
+    const pessoa = await criar({ collection: 'crm-contatos', data: { empresa: e.id, nome: 'Pessoa Ficticia' } })
+
+    const retorno = new Date(Date.now() + 86400000).toISOString()
+    await criar({
+      collection: 'crm-registros-contato',
+      data: { empresa: e.id, canal: 'ligacao', resultado: 'numero_invalido', telefoneUsado: '3538221234', proximoPassoData: retorno },
+      ...como(u.vend1),
+    })
+    let atual = await payload.findByID({ collection: 'crm-empresas', id: e.id, depth: 0 })
+    expect(atual.status).toBe('em_contato')
+    expect(atual.retornarEm).toBe(retorno)
+    expect(atual.telefones!.map((t) => [t.numero, t.valido])).toEqual([['3538221234', false], ['35999998888', true]])
+    const mov = await payload.find({ collection: 'crm-movimentacoes', where: { empresa: { equals: e.id } } })
+    expect(mov.docs[0]).toMatchObject({ de: 'na_fila', para: 'em_contato', usuarioNome: 'vend1' })
+
+    await criar({
+      collection: 'crm-registros-contato',
+      data: { empresa: e.id, contato: pessoa.id, canal: 'whatsapp', resultado: 'nao_contatar' },
+      ...como(u.vend1),
+    })
+    const p = await payload.findByID({ collection: 'crm-contatos', id: pessoa.id, depth: 0 })
+    expect(p.naoContatar).toBe(true)
+    expect(p.naoContatarEm).toBeTruthy()
+    expect(p.naoContatarPor).toBe(u.vend1.id)
+
+    await criar({
+      collection: 'crm-registros-contato',
+      data: { empresa: e.id, canal: 'email', resultado: 'nao_contatar' },
+      ...como(u.vend1),
+    })
+    atual = await payload.findByID({ collection: 'crm-empresas', id: e.id, depth: 0 })
+    expect(atual.naoContatar).toBe(true)
+    expect(atual.status).toBe('em_contato') // não volta nem avança sozinho
+  })
+
   it('tabelas do CRM: RLS ligado e anon/authenticated sem acesso', async () => {
     const pool = new pg.Pool({ connectionString: uri })
     const { rows } = await pool.query(`SELECT tablename, rowsecurity,

@@ -37,6 +37,12 @@ export const Empresas: CollectionConfig = {
   },
   fields: [
     {
+      // Canais de contato (ligar, WhatsApp, e-mail), registro de tentativa e histórico
+      name: 'painelContato',
+      type: 'ui',
+      admin: { components: { Field: '@/components/admin/crm/PainelContato' } },
+    },
+    {
       type: 'row',
       fields: [
         {

@@ -99,3 +99,42 @@ html[data-theme='dark'] .template-minimal {
   width: auto;
   display: block;
 }
+
+/* Botão de modo claro / escuro */
+.wsoft-tema {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-0);
+  color: var(--theme-elevation-700);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.wsoft-tema:hover {
+  background: var(--theme-elevation-50);
+}
+
+.wsoft-tema--nav {
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.wsoft-tema--login {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 5px 9px;
+  font-size: 11px;
+}
+
+/* Login no modo escuro: cartão e textos acompanham o tema */
+html[data-theme='dark'] .template-minimal .template-minimal__wrap {
+  background: var(--theme-elevation-50);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 40%);
+}
