@@ -30,11 +30,13 @@ export const Media: CollectionConfig = {
   fields: [
     {
       name: 'alt',
+      label: 'Texto alternativo',
       type: 'text',
       //required: true,
     },
     {
       name: 'caption',
+      label: 'Legenda',
       type: 'richText',
       editor: lexicalEditor({
         features: ({ rootFeatures }) => {

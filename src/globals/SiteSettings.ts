@@ -36,6 +36,7 @@ export const SiteSettings: GlobalConfig = {
           fields: [
             {
               name: 'whatsappNumber',
+              label: 'Número do WhatsApp',
               type: 'text',
               required: true,
               admin: {
@@ -44,19 +45,23 @@ export const SiteSettings: GlobalConfig = {
             },
             {
               name: 'whatsappMessage',
+              label: 'Mensagem padrão do WhatsApp',
               type: 'textarea',
               defaultValue: 'Olá! Vim pelo site da WSoft e gostaria de mais informações.',
             },
             {
               name: 'contactEmail',
+              label: 'E-mail de contato',
               type: 'text',
             },
             {
               name: 'contactPhone',
+              label: 'Telefone',
               type: 'text',
             },
             {
               name: 'contactCell',
+              label: 'Celular',
               type: 'text',
             },
           ],
@@ -66,11 +71,13 @@ export const SiteSettings: GlobalConfig = {
           fields: [
             {
               name: 'heroHeadline',
+              label: 'Título principal',
               type: 'text',
               defaultValue: 'Soluções em Sistemas para o Agronegócio',
             },
             {
               name: 'heroSubtitle',
+              label: 'Subtítulo',
               type: 'textarea',
             },
             {
@@ -81,16 +88,19 @@ export const SiteSettings: GlobalConfig = {
               fields: [
                 {
                   name: 'label',
+                  label: 'Rótulo',
                   type: 'text',
                   required: true,
                 },
                 {
                   name: 'value',
+                  label: 'Valor',
                   type: 'number',
                   required: true,
                 },
                 {
                   name: 'suffix',
+                  label: 'Sufixo',
                   type: 'text',
                   admin: {
                     description: 'Ex: "+", "anos"',

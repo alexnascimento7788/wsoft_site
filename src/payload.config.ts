@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { pt } from '@payloadcms/translations/languages/pt'
 import sharp from 'sharp'
 import path from 'path'
 import { buildConfig, PayloadRequest } from 'payload'
@@ -43,6 +44,12 @@ export default buildConfig({
           exact: true,
           meta: { title: 'Painel do orçamento' },
         },
+        lancamentos: {
+          Component: '@/components/admin/LancamentosView',
+          path: '/orcamento/lancamentos',
+          exact: true,
+          meta: { title: 'Lançamentos do mês' },
+        },
         crm: {
           Component: '@/components/admin/CrmView',
           path: '/crm',
@@ -57,6 +64,17 @@ export default buildConfig({
     user: Users.slug,
   },
   editor: defaultLexical,
+  // Admin só em português (sem opção de idioma)
+  i18n: {
+    supportedLanguages: { pt },
+    fallbackLanguage: 'pt',
+    translations: {
+      pt: {
+        authentication: { logOut: 'Sair', login: 'Entrar' },
+        general: { dashboard: 'Início' },
+      },
+    },
+  },
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI,

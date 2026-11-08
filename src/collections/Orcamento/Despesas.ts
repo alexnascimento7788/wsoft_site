@@ -46,9 +46,10 @@ const preencherDespesa: CollectionBeforeChangeHook = async ({ data, req, origina
     }
   }
 
-  data.totalOrcado = somaMeses(data.orcado)
-  data.totalRealizado = somaMeses(data.realizado)
-  data.totalPrevisto = somaMeses(data.previsto)
+  // Em atualizações parciais (ex.: só o realizado), os grupos que não vieram mantêm o valor gravado
+  data.totalOrcado = somaMeses(data.orcado ?? originalDoc?.orcado)
+  data.totalRealizado = somaMeses(data.realizado ?? originalDoc?.realizado)
+  data.totalPrevisto = somaMeses(data.previsto ?? originalDoc?.previsto)
   return data
 }
 

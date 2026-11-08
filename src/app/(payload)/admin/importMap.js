@@ -15,6 +15,7 @@ import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/component
 import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 import { default as default_49cbc28aa7a0151d1cc8c8a6e1c7c3ee } from '@/components/admin/OrcamentoView'
+import { default as default_c924778ada268123edd1f08d8e01ad73 } from '@/components/admin/LancamentosView'
 import { default as default_5602a998aa9eb7b69c0fb86566d882c9 } from '@/components/admin/CrmView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -37,6 +38,7 @@ export const importMap = {
   "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
   "@/components/admin/OrcamentoView#default": default_49cbc28aa7a0151d1cc8c8a6e1c7c3ee,
+  "@/components/admin/LancamentosView#default": default_c924778ada268123edd1f08d8e01ad73,
   "@/components/admin/CrmView#default": default_5602a998aa9eb7b69c0fb86566d882c9,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

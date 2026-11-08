@@ -47,11 +47,13 @@ export const Products: CollectionConfig = {
   fields: [
     {
       name: 'name',
+      label: 'Nome',
       type: 'text',
       required: true,
     },
     {
       name: 'slug',
+      label: 'Slug (endereço da página)',
       type: 'text',
       required: true,
       unique: true,
@@ -61,11 +63,13 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'logo',
+      label: 'Logo',
       type: 'upload',
       relationTo: 'media',
     },
     {
       name: 'status',
+      label: 'Status',
       type: 'select',
       required: true,
       defaultValue: 'em-breve',
@@ -76,6 +80,7 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'shortDescription',
+      label: 'Descrição curta',
       type: 'textarea',
       admin: {
         description: 'Usado nos cards da home',
@@ -83,6 +88,7 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'features',
+      label: 'Funcionalidades',
       type: 'richText',
       editor: lexicalEditor({
         features: ({ rootFeatures }) => {
@@ -92,6 +98,7 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'order',
+      label: 'Ordem',
       type: 'number',
       defaultValue: 0,
       admin: {

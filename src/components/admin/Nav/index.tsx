@@ -14,12 +14,15 @@ type Props = ServerProps & { visibleEntities?: VisibleEntities }
 const BLOCOS = [
   {
     grupo: 'Orçamento',
-    painel: { path: '/orcamento', label: '📊 Painel do orçamento', id: 'nav-orcamento' },
+    paineis: [
+      { path: '/orcamento', label: '📊 Painel do orçamento', id: 'nav-orcamento' },
+      { path: '/orcamento/lancamentos', label: '📝 Lançamentos do mês', id: 'nav-orcamento-lancamentos' },
+    ],
     pode: canReadBudgetUser,
   },
   {
     grupo: 'CRM',
-    painel: { path: '/crm', label: '🎯 Painel do CRM', id: 'nav-crm' },
+    paineis: [{ path: '/crm', label: '🎯 Painel do CRM', id: 'nav-crm' }],
     pode: canAccessCrmUser,
   },
   { grupo: 'Site' },
@@ -72,11 +75,13 @@ export default async function Nav(props: Props) {
       <nav className="nav__wrap">
         {BLOCOS.map((bloco) => {
           const itens = doGrupo(bloco.grupo)
-          const comPainel = 'painel' in bloco && bloco.pode(user)
-          if (!comPainel && itens.length === 0) return null
+          const paineis = 'paineis' in bloco && bloco.pode(user) ? bloco.paineis : []
+          if (paineis.length === 0 && itens.length === 0) return null
           return (
             <React.Fragment key={bloco.grupo}>
-              {comPainel && <PainelLink {...bloco.painel} />}
+              {paineis.map((p) => (
+                <PainelLink key={p.id} {...p} />
+              ))}
               {itens.length > 0 && <DefaultNavClient groups={itens} navPreferences={prefs as NavPreferences} />}
             </React.Fragment>
           )
