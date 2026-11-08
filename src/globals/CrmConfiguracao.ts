@@ -48,6 +48,13 @@ const listaCnae = (name: string, label: string, description: string, defaultValu
   ],
 })
 
+// Regra inicial (usada pelo motor de importação enquanto a configuração não foi salva)
+export const regraPrioridadePadrao = () => ({
+  cnaesAlta: CNAES_ALTA,
+  termosAlta: [{ termo: 'COOPERATIV' }],
+  cnaesMediaPrimario: CNAES_MEDIA_PRIMARIO,
+})
+
 export const AVISO_PRIVACIDADE_PADRAO = `A Wsoft Informática trata dados de contato profissional de empresas do agronegócio (nome, telefone e e-mail de sócios e contatos), obtidos de fornecedor de dados cadastrais, com base no legítimo interesse (art. 7º, IX, da LGPD), exclusivamente para apresentar soluções de gestão para silos e armazéns. Os dados são acessados apenas pela equipe comercial responsável e não são compartilhados com terceiros. O titular pode, a qualquer momento, pedir para não ser mais contatado, solicitar acesso, correção ou exclusão dos seus dados pelo canal de atendimento informado abaixo.`
 
 export const CrmConfiguracao: GlobalConfig = {
