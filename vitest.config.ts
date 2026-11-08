@@ -11,5 +11,7 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
+    // Os testes de integração usam o mesmo banco descartável: um arquivo por vez
+    fileParallelism: false,
   },
 })

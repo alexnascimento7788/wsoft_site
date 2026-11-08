@@ -14,8 +14,11 @@ export const redirects: NextConfig['redirects'] = async () => {
     source: '/:path((?!ie-incompatible.html$).*)', // all pages except the incompatibility page
   }
 
-  // Atalhos: wsoftinfo.com.br/orcamento (sem login, o painel manda para o login e volta)
-  const atalhos = [{ source: '/orcamento', destination: '/admin/orcamento', permanent: false }]
+  // Atalhos: wsoftinfo.com.br/orcamento e /crm (sem login, o painel manda para o login e volta)
+  const atalhos = [
+    { source: '/orcamento', destination: '/admin/orcamento', permanent: false },
+    { source: '/crm', destination: '/admin/crm', permanent: false },
+  ]
 
   return [internetExplorerRedirect, ...atalhos]
 }

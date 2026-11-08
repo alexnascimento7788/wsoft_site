@@ -1,4 +1,4 @@
-import type { Access, ClientUser, FieldAccess, PayloadRequest } from 'payload'
+import type { Access, ClientUser, FieldAccess, PayloadRequest, Where } from 'payload'
 
 import type { User } from '@/payload-types'
 
@@ -73,11 +73,33 @@ export const canReadUsers: Access = ({ req }) => {
   return { id: { equals: req.user.id } }
 }
 
+// CRM — filtro por responsável. admin/crm_admin veem tudo; vendedor vê os leads atribuídos
+// a ele; apresentador, os encaminhados a ele (quem tem os dois perfis vê os dois conjuntos).
+// `prefixo` = caminho até a empresa ('' na própria empresa, 'empresa.' nas coleções filhas).
+export const leadsDoUsuario = (user: MaybeUser, prefixo = '') => {
+  if (isCrmAdminUser(user)) return true
+  const id = (user as { id?: number | string } | null | undefined)?.id
+  if (!id) return false
+  const roles = getRoles(user)
+  const or: Where[] = []
+  if (roles.includes('vendedor')) or.push({ [`${prefixo}vendedor`]: { equals: id } })
+  if (roles.includes('apresentador')) or.push({ [`${prefixo}apresentador`]: { equals: id } })
+  if (or.length === 0) return false
+  return or.length === 1 ? or[0] : { or }
+}
+
+export const crmLeadAccess =
+  (prefixo = ''): Access =>
+  ({ req }) =>
+    leadsDoUsuario(req.user, prefixo)
+
 // Field access
 export const isAdminField: FieldAccess = ({ req }) => isAdminUser(req.user)
+export const isCrmAdminField: FieldAccess = ({ req }) => isCrmAdminUser(req.user)
 
 // admin.hidden — complemento visual; quem protege de fato é o access control acima
 type HiddenArgs = { user: ClientUser | PayloadRequest['user'] }
 export const hideFromNonAdmins = ({ user }: HiddenArgs) => !isAdminUser(user)
 export const hideFromNonBudget = ({ user }: HiddenArgs) => !canReadBudgetUser(user)
 export const hideFromNonCrmAdmins = ({ user }: HiddenArgs) => !isCrmAdminUser(user)
+export const hideFromNonCrm = ({ user }: HiddenArgs) => !canAccessCrmUser(user)

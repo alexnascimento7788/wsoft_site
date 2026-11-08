@@ -71,6 +71,16 @@ export interface Config {
     contas: Conta;
     despesas: Despesa;
     fornecedores: Fornecedore;
+    'crm-empresas': CrmEmpresa;
+    'crm-contatos': CrmContato;
+    'crm-registros-contato': CrmRegistrosContato;
+    'crm-qualificacoes': CrmQualificacoe;
+    'crm-desfechos': CrmDesfecho;
+    'crm-movimentacoes': CrmMovimentacoe;
+    'crm-lotes-importacao': CrmLotesImportacao;
+    'crm-modelos-importacao': CrmModelosImportacao;
+    'crm-solicitacoes-titular': CrmSolicitacoesTitular;
+    'crm-auditoria': CrmAuditoria;
     products: Product;
     media: Media;
     users: User;
@@ -85,6 +95,16 @@ export interface Config {
     contas: ContasSelect<false> | ContasSelect<true>;
     despesas: DespesasSelect<false> | DespesasSelect<true>;
     fornecedores: FornecedoresSelect<false> | FornecedoresSelect<true>;
+    'crm-empresas': CrmEmpresasSelect<false> | CrmEmpresasSelect<true>;
+    'crm-contatos': CrmContatosSelect<false> | CrmContatosSelect<true>;
+    'crm-registros-contato': CrmRegistrosContatoSelect<false> | CrmRegistrosContatoSelect<true>;
+    'crm-qualificacoes': CrmQualificacoesSelect<false> | CrmQualificacoesSelect<true>;
+    'crm-desfechos': CrmDesfechosSelect<false> | CrmDesfechosSelect<true>;
+    'crm-movimentacoes': CrmMovimentacoesSelect<false> | CrmMovimentacoesSelect<true>;
+    'crm-lotes-importacao': CrmLotesImportacaoSelect<false> | CrmLotesImportacaoSelect<true>;
+    'crm-modelos-importacao': CrmModelosImportacaoSelect<false> | CrmModelosImportacaoSelect<true>;
+    'crm-solicitacoes-titular': CrmSolicitacoesTitularSelect<false> | CrmSolicitacoesTitularSelect<true>;
+    'crm-auditoria': CrmAuditoriaSelect<false> | CrmAuditoriaSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -99,10 +119,12 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'configuracao-orcamento': ConfiguracaoOrcamento;
+    'crm-configuracao': CrmConfiguracao;
     'site-settings': SiteSetting;
   };
   globalsSelect: {
     'configuracao-orcamento': ConfiguracaoOrcamentoSelect<false> | ConfiguracaoOrcamentoSelect<true>;
+    'crm-configuracao': CrmConfiguracaoSelect<false> | CrmConfiguracaoSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
   };
   locale: null;
@@ -301,6 +323,366 @@ export interface Fornecedore {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-empresas".
+ */
+export interface CrmEmpresa {
+  id: number;
+  razaoSocial: string;
+  nomeFantasia?: string | null;
+  /**
+   * 14 dígitos, só números.
+   */
+  cnpj: string;
+  /**
+   * 8 primeiros dígitos.
+   */
+  raizCnpj?: string | null;
+  tipo?: ('matriz' | 'filial') | null;
+  situacaoCadastral?: string | null;
+  /**
+   * Faixa informada pela fonte.
+   */
+  faixaFundacao?: string | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  /**
+   * 8 dígitos
+   */
+  cep?: string | null;
+  telefones?:
+    | {
+        /**
+         * Só dígitos. Ex.: 35912345678
+         */
+        numero: string;
+        tipo?: ('fixo' | 'celular') | null;
+        /**
+         * Desmarcado = número inválido/errado; sai da fila de ligação.
+         */
+        valido?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  cnaes?:
+    | {
+        codigo: string;
+        descricao?: string | null;
+        principal?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  observacoes?: string | null;
+  status:
+    | 'na_fila'
+    | 'em_contato'
+    | 'qualificado'
+    | 'apresentacao_agendada'
+    | 'apresentacao_feita'
+    | 'venda_realizada'
+    | 'venda_nao_realizada'
+    | 'retornar_depois'
+    | 'descartado';
+  retornarEm?: string | null;
+  motivoDescarte?: ('sem_perfil' | 'sem_interesse' | 'empresa_inativa' | 'sem_canal' | 'outro') | null;
+  /**
+   * Só ordena a fila. Não é a classificação do lead.
+   */
+  prioridade?: ('alta' | 'media' | 'baixa') | null;
+  prioridadeCalculada?: ('alta' | 'media' | 'baixa') | null;
+  /**
+   * Em branco = usa a calculada.
+   */
+  prioridadeManual?: ('alta' | 'media' | 'baixa') | null;
+  vendedor?: (number | null) | User;
+  apresentador?: (number | null) | User;
+  apresentacaoData?: string | null;
+  /**
+   * Bloqueia o contato e retira das filas e listas de trabalho.
+   */
+  naoContatar?: boolean | null;
+  naoContatarEm?: string | null;
+  naoContatarPor?: (number | null) | User;
+  /**
+   * Sem telefone e sem e-mail: fora da fila de ligação.
+   */
+  semCanalContato?: boolean | null;
+  alertas?: ('situacao_nao_ativa' | 'em_liquidacao' | 'recuperacao_judicial')[] | null;
+  ordemImportacao?: number | null;
+  origem?: ('boa_vista' | 'instagram' | 'indicacao' | 'base_wsoft' | 'site' | 'outra') | null;
+  /**
+   * Ex.: Boa Vista
+   */
+  fornecedorDado?: string | null;
+  lote?: (number | null) | CrmLotesImportacao;
+  dataImportacao?: string | null;
+  baseLegal?: ('legitimo_interesse' | 'consentimento' | 'outra') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-lotes-importacao".
+ */
+export interface CrmLotesImportacao {
+  id: number;
+  nome: string;
+  origem: 'boa_vista' | 'instagram' | 'indicacao' | 'base_wsoft' | 'site' | 'outra';
+  fornecedorDado?: string | null;
+  arquivoNome?: string | null;
+  status?: ('rascunho' | 'processando' | 'concluido' | 'concluido_com_erros' | 'falhou') | null;
+  modoDuplicados?: ('ignorar' | 'completar') | null;
+  origemLicitaConfirmada?: boolean | null;
+  linhas?: number | null;
+  criados?: number | null;
+  atualizados?: number | null;
+  duplicados?: number | null;
+  alertas?: number | null;
+  erros?: number | null;
+  /**
+   * Usado para baixar as linhas com erro.
+   */
+  relatorioErros?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  registradoPor?: (number | null) | User;
+  registradoPorNome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-contatos".
+ */
+export interface CrmContato {
+  id: number;
+  empresa: number | CrmEmpresa;
+  nome?: string | null;
+  email?: string | null;
+  papel?: ('decisor' | 'influenciador' | 'operacional' | 'indefinido') | null;
+  /**
+   * Nome do contato igual à razão social.
+   */
+  empresarioIndividual?: boolean | null;
+  telefones?:
+    | {
+        /**
+         * Só dígitos. Ex.: 35912345678
+         */
+        numero: string;
+        tipo?: ('fixo' | 'celular') | null;
+        /**
+         * Desmarcado = número inválido/errado; sai da fila de ligação.
+         */
+        valido?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Bloqueia o contato e retira das filas e listas de trabalho.
+   */
+  naoContatar?: boolean | null;
+  naoContatarEm?: string | null;
+  naoContatarPor?: (number | null) | User;
+  origem?: ('boa_vista' | 'instagram' | 'indicacao' | 'base_wsoft' | 'site' | 'outra') | null;
+  /**
+   * Ex.: Boa Vista
+   */
+  fornecedorDado?: string | null;
+  lote?: (number | null) | CrmLotesImportacao;
+  dataImportacao?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-registros-contato".
+ */
+export interface CrmRegistrosContato {
+  id: number;
+  empresa: number | CrmEmpresa;
+  contato?: (number | null) | CrmContato;
+  dataHora: string;
+  canal: 'ligacao' | 'whatsapp' | 'email' | 'outro';
+  telefoneUsado?: string | null;
+  resultado:
+    | 'nao_atendeu'
+    | 'numero_invalido'
+    | 'pessoa_errada'
+    | 'falou_decisor'
+    | 'pediu_retorno'
+    | 'sem_interesse'
+    | 'nao_contatar';
+  observacao?: string | null;
+  proximoPasso?: string | null;
+  proximoPassoData?: string | null;
+  houveConversa?: boolean | null;
+  registradoPor?: (number | null) | User;
+  registradoPorNome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-qualificacoes".
+ */
+export interface CrmQualificacoe {
+  id: number;
+  empresa: number | CrmEmpresa;
+  operaArmazenagem?: ('sim' | 'nao' | 'nao_sei') | null;
+  interesse?: ('alto' | 'medio' | 'baixo') | null;
+  /**
+   * Ex.: soja, milho, café
+   */
+  graos?: string | null;
+  sistemaGestao?: ('nenhum' | 'planilha' | 'outro') | null;
+  sistemaNome?: string | null;
+  resultado: 'qualificado' | 'retornar_depois' | 'descartado';
+  retornarEm?: string | null;
+  motivoDescarte?: ('sem_perfil' | 'sem_interesse' | 'empresa_inativa' | 'sem_canal' | 'outro') | null;
+  observacao?: string | null;
+  registradoPor?: (number | null) | User;
+  registradoPorNome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-desfechos".
+ */
+export interface CrmDesfecho {
+  id: number;
+  empresa: number | CrmEmpresa;
+  resultado: 'venda_realizada' | 'venda_nao_realizada';
+  data: string;
+  valor?: number | null;
+  fechadoPor?: (number | null) | User;
+  motivo?: ('preco' | 'ja_tem_sistema' | 'sem_interesse' | 'adiou_decisao' | 'sem_retorno' | 'outro') | null;
+  observacao?: string | null;
+  registradoPor?: (number | null) | User;
+  registradoPorNome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-movimentacoes".
+ */
+export interface CrmMovimentacoe {
+  id: number;
+  empresa: number | CrmEmpresa;
+  de?:
+    | (
+        | 'na_fila'
+        | 'em_contato'
+        | 'qualificado'
+        | 'apresentacao_agendada'
+        | 'apresentacao_feita'
+        | 'venda_realizada'
+        | 'venda_nao_realizada'
+        | 'retornar_depois'
+        | 'descartado'
+      )
+    | null;
+  para:
+    | 'na_fila'
+    | 'em_contato'
+    | 'qualificado'
+    | 'apresentacao_agendada'
+    | 'apresentacao_feita'
+    | 'venda_realizada'
+    | 'venda_nao_realizada'
+    | 'retornar_depois'
+    | 'descartado';
+  motivo?: string | null;
+  usuario?: (number | null) | User;
+  usuarioNome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-modelos-importacao".
+ */
+export interface CrmModelosImportacao {
+  id: number;
+  nome: string;
+  mapeamento:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-solicitacoes-titular".
+ */
+export interface CrmSolicitacoesTitular {
+  id: number;
+  protocolo: string;
+  tipo: 'exportacao' | 'exclusao' | 'correcao' | 'outro';
+  status?: ('aberta' | 'concluida' | 'recusada') | null;
+  recebidaEm: string;
+  canal?: string | null;
+  concluidaEm?: string | null;
+  /**
+   * Após a exclusão definitiva este vínculo fica vazio.
+   */
+  empresa?: (number | null) | CrmEmpresa;
+  observacao?: string | null;
+  registradoPor?: (number | null) | User;
+  registradoPorNome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-auditoria".
+ */
+export interface CrmAuditoria {
+  id: number;
+  acao:
+    | 'login'
+    | 'criacao'
+    | 'alteracao'
+    | 'exclusao'
+    | 'exportacao'
+    | 'importacao'
+    | 'abertura_ficha'
+    | 'solicitacao_titular';
+  colecao?: string | null;
+  documentoId?: string | null;
+  campos?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  usuario?: (number | null) | User;
+  usuarioNome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "products".
  */
 export interface Product {
@@ -471,6 +853,46 @@ export interface PayloadLockedDocument {
         value: number | Fornecedore;
       } | null)
     | ({
+        relationTo: 'crm-empresas';
+        value: number | CrmEmpresa;
+      } | null)
+    | ({
+        relationTo: 'crm-contatos';
+        value: number | CrmContato;
+      } | null)
+    | ({
+        relationTo: 'crm-registros-contato';
+        value: number | CrmRegistrosContato;
+      } | null)
+    | ({
+        relationTo: 'crm-qualificacoes';
+        value: number | CrmQualificacoe;
+      } | null)
+    | ({
+        relationTo: 'crm-desfechos';
+        value: number | CrmDesfecho;
+      } | null)
+    | ({
+        relationTo: 'crm-movimentacoes';
+        value: number | CrmMovimentacoe;
+      } | null)
+    | ({
+        relationTo: 'crm-lotes-importacao';
+        value: number | CrmLotesImportacao;
+      } | null)
+    | ({
+        relationTo: 'crm-modelos-importacao';
+        value: number | CrmModelosImportacao;
+      } | null)
+    | ({
+        relationTo: 'crm-solicitacoes-titular';
+        value: number | CrmSolicitacoesTitular;
+      } | null)
+    | ({
+        relationTo: 'crm-auditoria';
+        value: number | CrmAuditoria;
+      } | null)
+    | ({
         relationTo: 'products';
         value: number | Product;
       } | null)
@@ -627,6 +1049,230 @@ export interface FornecedoresSelect<T extends boolean = true> {
   email?: T;
   telefone?: T;
   observacoes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-empresas_select".
+ */
+export interface CrmEmpresasSelect<T extends boolean = true> {
+  razaoSocial?: T;
+  nomeFantasia?: T;
+  cnpj?: T;
+  raizCnpj?: T;
+  tipo?: T;
+  situacaoCadastral?: T;
+  faixaFundacao?: T;
+  logradouro?: T;
+  numero?: T;
+  complemento?: T;
+  bairro?: T;
+  cidade?: T;
+  uf?: T;
+  cep?: T;
+  telefones?:
+    | T
+    | {
+        numero?: T;
+        tipo?: T;
+        valido?: T;
+        id?: T;
+      };
+  cnaes?:
+    | T
+    | {
+        codigo?: T;
+        descricao?: T;
+        principal?: T;
+        id?: T;
+      };
+  observacoes?: T;
+  status?: T;
+  retornarEm?: T;
+  motivoDescarte?: T;
+  prioridade?: T;
+  prioridadeCalculada?: T;
+  prioridadeManual?: T;
+  vendedor?: T;
+  apresentador?: T;
+  apresentacaoData?: T;
+  naoContatar?: T;
+  naoContatarEm?: T;
+  naoContatarPor?: T;
+  semCanalContato?: T;
+  alertas?: T;
+  ordemImportacao?: T;
+  origem?: T;
+  fornecedorDado?: T;
+  lote?: T;
+  dataImportacao?: T;
+  baseLegal?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-contatos_select".
+ */
+export interface CrmContatosSelect<T extends boolean = true> {
+  empresa?: T;
+  nome?: T;
+  email?: T;
+  papel?: T;
+  empresarioIndividual?: T;
+  telefones?:
+    | T
+    | {
+        numero?: T;
+        tipo?: T;
+        valido?: T;
+        id?: T;
+      };
+  naoContatar?: T;
+  naoContatarEm?: T;
+  naoContatarPor?: T;
+  origem?: T;
+  fornecedorDado?: T;
+  lote?: T;
+  dataImportacao?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-registros-contato_select".
+ */
+export interface CrmRegistrosContatoSelect<T extends boolean = true> {
+  empresa?: T;
+  contato?: T;
+  dataHora?: T;
+  canal?: T;
+  telefoneUsado?: T;
+  resultado?: T;
+  observacao?: T;
+  proximoPasso?: T;
+  proximoPassoData?: T;
+  houveConversa?: T;
+  registradoPor?: T;
+  registradoPorNome?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-qualificacoes_select".
+ */
+export interface CrmQualificacoesSelect<T extends boolean = true> {
+  empresa?: T;
+  operaArmazenagem?: T;
+  interesse?: T;
+  graos?: T;
+  sistemaGestao?: T;
+  sistemaNome?: T;
+  resultado?: T;
+  retornarEm?: T;
+  motivoDescarte?: T;
+  observacao?: T;
+  registradoPor?: T;
+  registradoPorNome?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-desfechos_select".
+ */
+export interface CrmDesfechosSelect<T extends boolean = true> {
+  empresa?: T;
+  resultado?: T;
+  data?: T;
+  valor?: T;
+  fechadoPor?: T;
+  motivo?: T;
+  observacao?: T;
+  registradoPor?: T;
+  registradoPorNome?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-movimentacoes_select".
+ */
+export interface CrmMovimentacoesSelect<T extends boolean = true> {
+  empresa?: T;
+  de?: T;
+  para?: T;
+  motivo?: T;
+  usuario?: T;
+  usuarioNome?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-lotes-importacao_select".
+ */
+export interface CrmLotesImportacaoSelect<T extends boolean = true> {
+  nome?: T;
+  origem?: T;
+  fornecedorDado?: T;
+  arquivoNome?: T;
+  status?: T;
+  modoDuplicados?: T;
+  origemLicitaConfirmada?: T;
+  linhas?: T;
+  criados?: T;
+  atualizados?: T;
+  duplicados?: T;
+  alertas?: T;
+  erros?: T;
+  relatorioErros?: T;
+  registradoPor?: T;
+  registradoPorNome?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-modelos-importacao_select".
+ */
+export interface CrmModelosImportacaoSelect<T extends boolean = true> {
+  nome?: T;
+  mapeamento?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-solicitacoes-titular_select".
+ */
+export interface CrmSolicitacoesTitularSelect<T extends boolean = true> {
+  protocolo?: T;
+  tipo?: T;
+  status?: T;
+  recebidaEm?: T;
+  canal?: T;
+  concluidaEm?: T;
+  empresa?: T;
+  observacao?: T;
+  registradoPor?: T;
+  registradoPorNome?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-auditoria_select".
+ */
+export interface CrmAuditoriaSelect<T extends boolean = true> {
+  acao?: T;
+  colecao?: T;
+  documentoId?: T;
+  campos?: T;
+  usuario?: T;
+  usuarioNome?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -832,6 +1478,52 @@ export interface ConfiguracaoOrcamento {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-configuracao".
+ */
+export interface CrmConfiguracao {
+  id: number;
+  /**
+   * CNAE primário nesta lista = Alta. Se algum CNAE secundário estiver aqui = Média.
+   */
+  cnaesAlta?:
+    | {
+        codigo: string;
+        descricao?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  termosAlta?:
+    | {
+        termo: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * CNAE primário nesta lista = Média (quando não for Alta).
+   */
+  cnaesMediaPrimario?:
+    | {
+        codigo: string;
+        descricao?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Sem nenhuma conversa, o lead só pode ser descartado (empresa inativa, número inexistente, sem canal) depois deste número de tentativas registradas.
+   */
+  tentativasParaDescarte: number;
+  baseLegalPadrao?: ('legitimo_interesse' | 'consentimento' | 'outra') | null;
+  encarregadoNome?: string | null;
+  /**
+   * Ex.: e-mail privacidade@wsoftinfo.com.br
+   */
+  canalTitular?: string | null;
+  avisoPrivacidade?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings".
  */
 export interface SiteSetting {
@@ -869,6 +1561,40 @@ export interface ConfiguracaoOrcamentoSelect<T extends boolean = true> {
   mesFechado?: T;
   alertaPercentual?: T;
   limitePercentual?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-configuracao_select".
+ */
+export interface CrmConfiguracaoSelect<T extends boolean = true> {
+  cnaesAlta?:
+    | T
+    | {
+        codigo?: T;
+        descricao?: T;
+        id?: T;
+      };
+  termosAlta?:
+    | T
+    | {
+        termo?: T;
+        id?: T;
+      };
+  cnaesMediaPrimario?:
+    | T
+    | {
+        codigo?: T;
+        descricao?: T;
+        id?: T;
+      };
+  tentativasParaDescarte?: T;
+  baseLegalPadrao?: T;
+  encarregadoNome?: T;
+  canalTitular?: T;
+  avisoPrivacidade?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
