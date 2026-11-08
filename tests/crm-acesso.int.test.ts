@@ -43,7 +43,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
       ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;`)
     await pool.end()
 
-    process.env.DATABASE_URI = uri
+    process.env.DATABASE_URI = uri!
     process.env.PAYLOAD_SECRET ||= 'segredo-de-teste'
     const { getPayload } = await import('payload')
     const config = (await import('@/payload.config')).default
@@ -65,7 +65,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
     for (const [k, roles] of Object.entries(perfis)) {
       const doc = await payload.create({
         collection: 'users',
-        data: { email: `${k}@teste.local`, password: 'senha-teste-123', name: k, roles: roles as never },
+        data: { email: `${k}@teste.local`, password: 'senha-teste-123', name: k, roles } as never,
       })
       u[k] = { ...(doc as unknown as U), collection: 'users' }
     }
