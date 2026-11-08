@@ -29,6 +29,9 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
   const emp: Record<string, number> = {}
 
   const como = (user: U) => ({ overrideAccess: false, user }) as const
+  // Dados parciais de propósito (campos com valor padrão ficam de fora)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const criar = (args: Record<string, unknown>) => payload.create(args as never) as Promise<any>
   const ids = async (collection: (typeof CRM)[number], user: U) =>
     (await payload.find({ collection, ...como(user), depth: 0, pagination: false })).docs.map((d) => d.id)
 
@@ -63,7 +66,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
       finEVend: ['financeiro', 'vendedor'],
     }
     for (const [k, roles] of Object.entries(perfis)) {
-      const doc = await payload.create({
+      const doc = await criar({
         collection: 'users',
         data: { email: `${k}@teste.local`, password: 'senha-teste-123', name: k, roles } as never,
       })
@@ -82,7 +85,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
     let n = 0
     for (const [k, r] of Object.entries(empresas)) {
       n++
-      const doc = await payload.create({
+      const doc = await criar({
         collection: 'crm-empresas',
         data: {
           razaoSocial: `EMPRESA FICTICIA ${k} LTDA`,
@@ -92,9 +95,9 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
         },
       })
       emp[k] = doc.id as number
-      await payload.create({ collection: 'crm-contatos', data: { empresa: doc.id, nome: `Contato ${k}` } })
+      await criar({ collection: 'crm-contatos', data: { empresa: doc.id, nome: `Contato ${k}` } })
     }
-    await payload.create({ collection: 'centros-de-custo', data: { codigo: 'T1', nome: 'Teste' } })
+    await criar({ collection: 'centros-de-custo', data: { codigo: 'T1', nome: 'Teste' } })
   }, 120_000)
 
   afterAll(async () => {
@@ -155,13 +158,13 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
 
   it('vendedor não registra contato em empresa de outro vendedor', async () => {
     await expect(
-      payload.create({
+      criar({
         collection: 'crm-registros-contato',
         data: { empresa: emp.B, canal: 'ligacao', resultado: 'nao_atendeu' },
         ...como(u.vend1),
       }),
     ).rejects.toThrow()
-    const ok = await payload.create({
+    const ok = await criar({
       collection: 'crm-registros-contato',
       data: { empresa: emp.A, canal: 'ligacao', resultado: 'falou_decisor' },
       ...como(u.vend1),
@@ -180,7 +183,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
     expect(r.observacoes).toBe('ok')
     expect(typeof r.vendedor === 'object' ? r.vendedor?.id : r.vendedor).toBe(u.vend1.id)
     await expect(
-      payload.create({
+      criar({
         collection: 'crm-empresas',
         data: { razaoSocial: 'X', cnpj: '99999999999999' },
         ...como(u.vend1),
