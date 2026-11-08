@@ -27,17 +27,22 @@ export function normalizarCnpj(v: unknown): { cnpj: string | null; erro?: 'cnpj_
   return cnpjValido(d) ? { cnpj: d } : { cnpj: null, erro: 'cnpj_invalido' }
 }
 
+const dvCnpj = (base: string) => {
+  const pesos = base.length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  const soma = [...base].reduce((s, c, i) => s + Number(c) * pesos[i], 0)
+  const r = soma % 11
+  return r < 2 ? 0 : 11 - r
+}
+
+// 12 primeiros dígitos → CNPJ completo com os dígitos verificadores (usado em dados fictícios de teste)
+export function cnpjComDv(base12: string) {
+  const d1 = dvCnpj(base12)
+  return `${base12}${d1}${dvCnpj(base12 + d1)}`
+}
+
 export function cnpjValido(d: string) {
   if (!/^\d{14}$/.test(d) || /^(\d)\1{13}$/.test(d)) return false
-  const dv = (base: string) => {
-    const pesos = base.length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    const soma = [...base].reduce((s, c, i) => s + Number(c) * pesos[i], 0)
-    const r = soma % 11
-    return r < 2 ? 0 : 11 - r
-  }
-  const d1 = dv(d.slice(0, 12))
-  const d2 = dv(d.slice(0, 12) + d1)
-  return d1 === Number(d[12]) && d2 === Number(d[13])
+  return cnpjComDv(d.slice(0, 12)) === d
 }
 
 // CEP: texto de 8 dígitos (o Excel perde o zero à esquerda)

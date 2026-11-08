@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
-import { crmLeadAccess, hideFromNonCrm, isCrmAdmin, isCrmAdminField } from '../../access/roles'
-import { calcularPrioridade, registrarNaoContatar } from './hooks'
+import { canCreateLead, canCreateLeadField, crmLeadAccess, hideFromNonCrm, isCrmAdmin, isCrmAdminField } from '../../access/roles'
+import { calcularPrioridade, prepararEmpresaManual, registrarNaoContatar } from './hooks'
 import {
   BASES_LEGAIS,
   GRUPO_CRM,
@@ -14,12 +14,14 @@ import {
 } from './opcoes'
 
 const soCrmAdmin = { create: isCrmAdminField, update: isCrmAdminField }
+// Dados cadastrais: quem cadastra o lead (vendedor incluído) preenche; depois só o crm_admin altera
+const cadastro = { create: canCreateLeadField, update: isCrmAdminField }
 
 export const Empresas: CollectionConfig = {
   slug: 'crm-empresas',
   labels: { singular: 'Empresa', plural: 'Empresas' },
   access: {
-    create: isCrmAdmin,
+    create: canCreateLead, // vendedor cadastra o lead que chegou até ele (fica como responsável)
     delete: isCrmAdmin,
     read: crmLeadAccess(),
     update: crmLeadAccess(),
@@ -33,7 +35,7 @@ export const Empresas: CollectionConfig = {
   },
   defaultSort: 'ordemImportacao',
   hooks: {
-    beforeChange: [calcularPrioridade, registrarNaoContatar],
+    beforeChange: [prepararEmpresaManual, calcularPrioridade, registrarNaoContatar],
   },
   fields: [
     {
@@ -50,7 +52,7 @@ export const Empresas: CollectionConfig = {
           label: 'Razão social',
           type: 'text',
           required: true,
-          access: soCrmAdmin,
+          access: cadastro,
           admin: { width: '60%' },
         },
         {
@@ -70,8 +72,8 @@ export const Empresas: CollectionConfig = {
           type: 'text',
           required: true,
           unique: true,
-          access: soCrmAdmin,
-          admin: { width: '25%', description: '14 dígitos, só números.' },
+          access: cadastro,
+          admin: { width: '25%', description: '14 dígitos; pode colar com pontos e barra.' },
         },
         {
           name: 'raizCnpj',
@@ -97,14 +99,14 @@ export const Empresas: CollectionConfig = {
           name: 'situacaoCadastral',
           label: 'Situação cadastral',
           type: 'text',
-          access: soCrmAdmin,
+          access: cadastro,
           admin: { width: '20%' },
         },
         {
           name: 'faixaFundacao',
           label: 'Tempo de existência',
           type: 'text',
-          access: soCrmAdmin,
+          access: cadastro,
           admin: { width: '20%', description: 'Faixa informada pela fonte.' },
         },
       ],
@@ -138,7 +140,7 @@ export const Empresas: CollectionConfig = {
       label: 'CNAEs',
       type: 'array',
       labels: { singular: 'CNAE', plural: 'CNAEs' },
-      access: soCrmAdmin,
+      access: cadastro,
       fields: [
         {
           type: 'row',

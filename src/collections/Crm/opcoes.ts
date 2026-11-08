@@ -144,14 +144,14 @@ export const camposOrigem = (): Field[] => [
     type: 'relationship',
     relationTo: 'crm-lotes-importacao',
     index: true,
-    access: { update: isCrmAdminField },
+    access: { create: isCrmAdminField, update: isCrmAdminField },
     admin: { position: 'sidebar' },
   },
   {
     name: 'dataImportacao',
     label: 'Data de importação',
     type: 'date',
-    access: { update: isCrmAdminField },
+    access: { create: isCrmAdminField, update: isCrmAdminField },
     admin: { position: 'sidebar', readOnly: true },
   },
 ]

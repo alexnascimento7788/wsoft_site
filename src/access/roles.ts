@@ -21,6 +21,8 @@ const BUDGET_EDIT: Role[] = ['admin', 'financeiro']
 const BUDGET_READ: Role[] = ['admin', 'financeiro', 'consulta']
 const CRM_ANY: Role[] = ['admin', 'crm_admin', 'vendedor', 'apresentador']
 const CRM_ADMIN: Role[] = ['admin', 'crm_admin']
+// Quem pode cadastrar um lead à mão (ex.: a pessoa viu o site e ligou)
+const CRM_CRIA_LEAD: Role[] = ['admin', 'crm_admin', 'vendedor']
 
 type MaybeUser =
   | Partial<Pick<User, 'role' | 'roles'>>
@@ -45,6 +47,7 @@ export const canEditBudgetUser = (user: MaybeUser) => hasRole(user, BUDGET_EDIT)
 export const canReadBudgetUser = (user: MaybeUser) => hasRole(user, BUDGET_READ)
 export const canAccessCrmUser = (user: MaybeUser) => hasRole(user, CRM_ANY)
 export const isCrmAdminUser = (user: MaybeUser) => hasRole(user, CRM_ADMIN)
+export const canCreateLeadUser = (user: MaybeUser) => hasRole(user, CRM_CRIA_LEAD)
 
 // Valor gravado na coluna antiga a partir dos perfis novos
 export const legacyRoleFor = (roles: Role[] | null | undefined): LegacyRole => {
@@ -59,6 +62,7 @@ export const canEditBudget: Access = ({ req }) => canEditBudgetUser(req.user)
 export const canReadBudget: Access = ({ req }) => canReadBudgetUser(req.user)
 export const canAccessCrm: Access = ({ req }) => canAccessCrmUser(req.user)
 export const isCrmAdmin: Access = ({ req }) => isCrmAdminUser(req.user)
+export const canCreateLead: Access = ({ req }) => canCreateLeadUser(req.user)
 
 export const isAdminOrSelf: Access = ({ req }) => {
   if (!req.user) return false
@@ -96,6 +100,7 @@ export const crmLeadAccess =
 // Field access
 export const isAdminField: FieldAccess = ({ req }) => isAdminUser(req.user)
 export const isCrmAdminField: FieldAccess = ({ req }) => isCrmAdminUser(req.user)
+export const canCreateLeadField: FieldAccess = ({ req }) => canCreateLeadUser(req.user)
 
 // admin.hidden — complemento visual; quem protege de fato é o access control acima
 type HiddenArgs = { user: ClientUser | PayloadRequest['user'] }

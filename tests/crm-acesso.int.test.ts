@@ -4,6 +4,8 @@ import pg from 'pg'
 import type { Payload } from 'payload'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+import { cnpjComDv } from '@/crm/importacao/normalizar'
+
 const uri = process.env.TEST_DATABASE_URI
 const local = !!uri && /@(127\.0\.0\.1|localhost)[:/]/.test(uri)
 
@@ -89,7 +91,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
         collection: 'crm-empresas',
         data: {
           razaoSocial: `EMPRESA FICTICIA ${k} LTDA`,
-          cnpj: String(n).padStart(14, '0'),
+          cnpj: cnpjComDv(`${String(n).padStart(8, '0')}0001`),
           vendedor: r.vendedor ? u[r.vendedor].id : undefined,
           apresentador: r.apresentador ? u[r.apresentador].id : undefined,
         },
@@ -173,7 +175,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
     expect(ok.houveConversa).toBe(true)
   })
 
-  it('vendedor não troca o responsável do lead nem cria empresas', async () => {
+  it('vendedor não troca o responsável do lead', async () => {
     const r = await payload.update({
       collection: 'crm-empresas',
       id: emp.A,
@@ -182,13 +184,53 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
     })
     expect(r.observacoes).toBe('ok')
     expect(typeof r.vendedor === 'object' ? r.vendedor?.id : r.vendedor).toBe(u.vend1.id)
-    await expect(
-      criar({
-        collection: 'crm-empresas',
-        data: { razaoSocial: 'X', cnpj: '99999999999999' },
-        ...como(u.vend1),
-      }),
-    ).rejects.toThrow()
+  })
+
+  it('vendedor cadastra lead à mão: fica responsável, CNPJ conferido e normalizado, prioridade pelo CNAE', async () => {
+    const cnpj = cnpjComDv('900000010002')
+    const doc = await criar({
+      collection: 'crm-empresas',
+      data: {
+        razaoSocial: 'LEAD DO SITE FICTICIO LTDA',
+        cnpj: `${cnpj.slice(0, 2)}.${cnpj.slice(2, 5)}.${cnpj.slice(5, 8)}/${cnpj.slice(8, 12)}-${cnpj.slice(12)}`,
+        origem: 'site',
+        vendedor: u.vend2.id, // ignorado: quem cadastra é o responsável
+        prioridadeManual: 'alta', // ignorado: só crm_admin corrige
+        telefones: [{ numero: '(35) 91234-5678' }],
+        cnaes: [{ codigo: '5211-7/01', principal: true }],
+      },
+      ...como(u.vend1),
+    })
+    expect(doc.cnpj).toBe(cnpj)
+    expect(doc.raizCnpj).toBe('90000001')
+    expect(doc.tipo).toBe('filial')
+    expect(doc.status).toBe('na_fila')
+    expect(doc.origem).toBe('site')
+    expect(typeof doc.vendedor === 'object' ? doc.vendedor?.id : doc.vendedor).toBe(u.vend1.id)
+    expect(doc.prioridadeManual ?? null).toBeNull()
+    expect(doc.prioridade).toBe('alta') // 5211701 está na lista Alta
+    expect(doc.telefones[0]).toMatchObject({ numero: '35912345678', tipo: 'celular', valido: true })
+    expect(await ids('crm-empresas', u.vend1)).toContain(doc.id)
+    expect(await ids('crm-empresas', u.vend2)).not.toContain(doc.id)
+
+    // CNPJ inválido, repetido ou telefone fora do padrão: recusa com a mensagem certa
+    const base = { razaoSocial: 'OUTRO FICTICIO' }
+    const motivo = (p: Promise<unknown>) =>
+      p.then(
+        () => 'gravou',
+        (e: { data?: { errors?: { message: string }[] }; message: string }) => e.data?.errors?.[0]?.message ?? e.message,
+      )
+    expect(await motivo(criar({ collection: 'crm-empresas', data: { ...base, cnpj: '11222333000100' }, ...como(u.vend1) }))).toMatch(/CNPJ inválido/)
+    expect(await motivo(criar({ collection: 'crm-empresas', data: { ...base, cnpj }, ...como(u.vend2) }))).toMatch(/já está no CRM/)
+    expect(
+      await motivo(
+        criar({ collection: 'crm-empresas', data: { ...base, cnpj: cnpjComDv('900000020001'), telefones: [{ numero: '123' }] }, ...como(u.vend1) }),
+      ),
+    ).toMatch(/Telefone fora do padrão/)
+    // apresentador e perfis do orçamento não cadastram
+    for (const k of ['apres1', 'financeiro']) {
+      await expect(criar({ collection: 'crm-empresas', data: { ...base, cnpj: cnpjComDv('900000030001') }, ...como(u[k]) })).rejects.toThrow()
+    }
   })
 
   it('registrar tentativa: lead vai para "Em contato", número inválido sai da fila, "Não contatar" e retorno', async () => {
@@ -196,7 +238,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
       collection: 'crm-empresas',
       data: {
         razaoSocial: 'EMPRESA FICTICIA EFEITOS LTDA',
-        cnpj: '00000000000999',
+        cnpj: cnpjComDv('000009990001'),
         vendedor: u.vend1.id,
         telefones: [{ numero: '3538221234', tipo: 'fixo' }, { numero: '35999998888', tipo: 'celular' }],
       },
