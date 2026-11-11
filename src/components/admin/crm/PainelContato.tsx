@@ -3,6 +3,7 @@
 import { toast, useAuth, useConfig, useDocumentInfo } from '@payloadcms/ui'
 import {
   BadgeCheck,
+  Check,
   Copy,
   History,
   Mail,
@@ -62,7 +63,35 @@ const rotulo = (lista: { label: string; value: string }[], v: string | null | un
 const dataHora = (iso: string) =>
   new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 
-const vazio = { canal: 'ligacao', telefoneUsado: '', contato: '', resultado: '', observacao: '', proximoPasso: '', proximoPassoData: '', quando: '' }
+// Uma tentativa pode usar vários canais de uma vez (ex.: mandou WhatsApp e e-mail): grava um registro por canal
+type FormTentativa = {
+  canais: string[]
+  usados: Record<string, string>
+  contato: string
+  resultado: string
+  observacao: string
+  proximoPasso: string
+  proximoPassoData: string
+  quando: string
+}
+const vazio: FormTentativa = {
+  canais: ['ligacao'],
+  usados: {},
+  contato: '',
+  resultado: '',
+  observacao: '',
+  proximoPasso: '',
+  proximoPassoData: '',
+  quando: '',
+}
+type CanalEscolhido = { canal: string; valor?: string; contatoId?: number }
+const NOME_CANAL: Record<string, string> = { ligacao: 'Ligação', whatsapp: 'WhatsApp', email: 'E-mail', outro: 'Outro' }
+
+// A ficha fica DENTRO do formulário do Payload: um <form> aqui seria ignorado pelo navegador
+// e o botão salvaria a empresa. Por isso <div> + onClick, e Enter num campo não envia nada.
+const semEnter = (e: React.KeyboardEvent) => {
+  if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') e.preventDefault()
+}
 
 const nomeUsuario = (u: Empresa['vendedor']) =>
   u && typeof u === 'object' ? u.name || u.email?.split('@')[0] || `Usuário ${u.id}` : u ? `Usuário ${u}` : null
@@ -96,7 +125,8 @@ export default function PainelContato() {
   const [acao, setAcao] = useState<Acao>(null)
   const [salvando, setSalvando] = useState(false)
   // Mensagem copiada / aberta no WhatsApp: oferece registrar a tentativa já preenchida
-  const [envio, setEnvio] = useState<{ canal: 'whatsapp' | 'email'; destino?: Destino } | null>(null)
+  // (acumula: se mandou WhatsApp e e-mail, o registro já vem com os dois)
+  const [envio, setEnvio] = useState<Partial<Record<'whatsapp' | 'email', Destino | undefined>>>({})
   const admin = isCrmAdminUser(user)
 
   const carregar = useCallback(async () => {
@@ -228,16 +258,30 @@ export default function PainelContato() {
     .filter((c) => c.tipo === 'email' || c.celular)
     .map((c) => ({ tipo: c.tipo === 'email' ? 'email' : 'whatsapp', valor: c.valor, pessoa: c.rotulo === 'Empresa' ? '' : c.rotulo, contatoId: c.contatoId }))
 
-  const abrirTentativa = (canal: string, canalInfo?: { valor: string; contatoId?: number }, resultado = '') => {
+  const abrirTentativa = (escolhidos: CanalEscolhido[], resultado = '') => {
+    const pessoa = escolhidos.find((e) => e.contatoId)?.contatoId
     setForm({
       ...vazio,
-      canal,
+      canais: escolhidos.map((e) => e.canal),
+      usados: Object.fromEntries(escolhidos.filter((e) => e.valor).map((e) => [e.canal, e.valor!])),
       resultado,
-      telefoneUsado: canalInfo?.valor ?? '',
-      contato: canalInfo?.contatoId ? String(canalInfo.contatoId) : '',
+      contato: pessoa ? String(pessoa) : '',
     })
     setAcao('tentativa')
   }
+
+  const alternarCanal = (canal: string) =>
+    setForm((f) => ({
+      ...f,
+      canais: f.canais.includes(canal)
+        ? f.canais.filter((c) => c !== canal)
+        : CANAIS_CONTATO.map((o) => o.value).filter((v) => v === canal || f.canais.includes(v)),
+    }))
+
+  const opcoesDoCanal = (canal: string) =>
+    canais.filter((c) =>
+      canal === 'ligacao' ? c.tipo === 'telefone' : canal === 'whatsapp' ? c.celular : canal === 'email' ? c.tipo === 'email' : true,
+    )
 
   const depoisDeSalvar = async () => {
     setAcao(null)
@@ -245,35 +289,47 @@ export default function PainelContato() {
     router.refresh()
   }
 
-  const registrar = async (ev: React.FormEvent) => {
-    ev.preventDefault()
+  const registrar = async () => {
+    if (!form.canais.length) return toast.error('Marque pelo menos um canal.')
     if (!form.resultado) return toast.error('Escolha o resultado da tentativa.')
     setSalvando(true)
-    const r = await fetch(`${api}/crm-registros-contato`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        empresa: id,
-        canal: form.canal,
-        telefoneUsado: form.telefoneUsado || undefined,
-        contato: form.contato ? Number(form.contato) : undefined,
-        resultado: form.resultado,
-        observacao: form.observacao || undefined,
-        proximoPasso: form.proximoPasso || undefined,
-        proximoPassoData: form.proximoPassoData ? new Date(form.proximoPassoData).toISOString() : undefined,
-        dataHora: form.quando ? new Date(form.quando).toISOString() : new Date().toISOString(),
-      }),
-    })
+    const dataHora = form.quando ? new Date(form.quando).toISOString() : new Date().toISOString()
+    const feitos: string[] = []
+    for (const canal of form.canais) {
+      const r = await fetch(`${api}/crm-registros-contato`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          empresa: id,
+          canal,
+          telefoneUsado: form.usados[canal] || undefined,
+          contato: form.contato ? Number(form.contato) : undefined,
+          resultado: form.resultado,
+          observacao: form.observacao || undefined,
+          proximoPasso: form.proximoPasso || undefined,
+          proximoPassoData: form.proximoPassoData ? new Date(form.proximoPassoData).toISOString() : undefined,
+          dataHora,
+        }),
+      })
+      if (!r.ok) {
+        const json = await r.json().catch(() => ({}))
+        const msg = json?.errors?.[0]?.data?.errors?.[0]?.message || json?.errors?.[0]?.message
+        setSalvando(false)
+        toast.error(
+          `${feitos.length ? `Gravado: ${feitos.join(', ')}. ` : ''}Não foi possível registrar ${NOME_CANAL[canal] ?? canal}${msg ? `: ${msg}` : '.'}`,
+        )
+        if (feitos.length) await depoisDeSalvar()
+        return
+      }
+      feitos.push(NOME_CANAL[canal] ?? canal)
+    }
     setSalvando(false)
-    if (!r.ok) return toast.error('Não foi possível registrar a tentativa.')
-    toast.success('Tentativa registrada.')
+    toast.success(feitos.length > 1 ? `Tentativa registrada (${feitos.join(' e ')}).` : 'Tentativa registrada.')
     setForm(vazio)
+    setSemTentativa(false)
     await depoisDeSalvar()
   }
-
-  const ehTelefone = form.canal === 'ligacao' || form.canal === 'whatsapp'
-  const opcoesUsado = canais.filter((c) => (ehTelefone ? c.tipo === 'telefone' : form.canal === 'email' ? c.tipo === 'email' : true))
   const vendedor = nomeUsuario(empresa.vendedor)
   const local = [empresa.cidade, empresa.uf?.toUpperCase()].filter(Boolean).join(' / ')
   const formBase = { api, empresa: empresa.id, aoSalvar: depoisDeSalvar, aoCancelar: () => setAcao(null) }
@@ -282,7 +338,7 @@ export default function PainelContato() {
     <button
       type="button"
       className={`crm-acao${acao === valor ? ' crm-acao--ativa' : ''}`}
-      onClick={() => (acao === valor ? setAcao(null) : valor === 'tentativa' ? abrirTentativa(canais[0]?.tipo === 'email' ? 'email' : 'ligacao', canais[0]) : setAcao(valor))}
+      onClick={() => (acao === valor ? setAcao(null) : valor === 'tentativa' ? abrirTentativa([{ ...canais[0], canal: canais[0]?.tipo === 'email' ? 'email' : 'ligacao' }]) : setAcao(valor))}
     >
       <Icone size={14} /> {children}
     </button>
@@ -363,7 +419,7 @@ export default function PainelContato() {
                     </button>
                     {c.tipo === 'telefone' && (
                       <>
-                        <a href={`tel:+55${c.valor}`} onClick={() => abrirTentativa('ligacao', c)} className="crm-btn crm-btn--ligar">
+                        <a href={`tel:+55${c.valor}`} onClick={() => abrirTentativa([{ ...c, canal: 'ligacao' }])} className="crm-btn crm-btn--ligar">
                           <Phone size={13} /> Ligar
                         </a>
                         {c.celular && (
@@ -418,50 +474,68 @@ export default function PainelContato() {
               uf={empresa.uf ?? ''}
               remetentePadrao={(user as { name?: string | null } | null)?.name?.split(' ')[0] ?? ''}
               destinos={destinos}
-              aoEnviar={(canal, destino) => setEnvio({ canal, destino })}
+              aoEnviar={(canal, destino) => setEnvio((e) => ({ ...e, [canal]: destino }))}
             />
           )}
-          {acao === 'mensagem' && envio && (
+          {acao === 'mensagem' && Object.keys(envio).length > 0 && (
             <div className="crm-ficha__envio">
               <span>Enviou a mensagem? Registre a tentativa para ela contar no Meu dia.</span>
               <button
                 type="button"
                 className="crm-btn crm-btn--registrar"
                 onClick={() => {
-                  abrirTentativa(envio.canal, envio.destino, 'aguardando_retorno')
-                  setEnvio(null)
+                  const enviados = (['whatsapp', 'email'] as const)
+                    .filter((k) => k in envio)
+                    .map((k) => ({ canal: k, valor: envio[k]?.valor, contatoId: envio[k]?.contatoId }))
+                  abrirTentativa(enviados, 'aguardando_retorno')
+                  setEnvio({})
                 }}
               >
-                Registrar envio por {envio.canal === 'whatsapp' ? 'WhatsApp' : 'e-mail'}
+                Registrar envio por {(['whatsapp', 'email'] as const).filter((k) => k in envio).map((k) => (k === 'whatsapp' ? 'WhatsApp' : 'e-mail')).join(' e ')}
               </button>
             </div>
           )}
 
           {acao === 'tentativa' && (
-            <form className="crm-contato__form" onSubmit={registrar}>
+            <div className="crm-contato__form" role="form" onKeyDown={semEnter}>
               <h4>Tentativa de contato</h4>
+              <div className="crm-contato__canais">
+                <span>Canais usados (pode marcar mais de um)</span>
+                <div>
+                  {CANAIS_CONTATO.map((o) => {
+                    const on = form.canais.includes(o.value)
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        className={`crm-chip${on ? ' crm-chip--on' : ''}`}
+                        aria-pressed={on}
+                        onClick={() => alternarCanal(o.value)}
+                      >
+                        {on ? <Check size={12} /> : null}
+                        {NOME_CANAL[o.value] ?? o.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
               <div className="crm-contato__linha">
-                <label>
-                  Canal
-                  <select value={form.canal} onChange={(e) => setForm({ ...form, canal: e.target.value, telefoneUsado: '' })}>
-                    {CANAIS_CONTATO.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label.replace(' (manual)', '')}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  {ehTelefone ? 'Telefone usado' : form.canal === 'email' ? 'E-mail usado' : 'Contato usado'}
-                  <select value={form.telefoneUsado} onChange={(e) => setForm({ ...form, telefoneUsado: e.target.value })}>
-                    <option value="">—</option>
-                    {opcoesUsado.map((c) => (
-                      <option key={`${c.tipo}-${c.valor}`} value={c.valor}>
-                        {c.tipo === 'telefone' ? formatarTelefone(c.valor) : c.valor} ({c.rotulo})
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {form.canais.map((canal) => (
+                  <label key={canal}>
+                    {canal === 'email' ? 'E-mail usado' : canal === 'outro' ? 'Contato usado (Outro)' : `Telefone usado (${NOME_CANAL[canal]})`}
+                    <select
+                      value={form.usados[canal] ?? ''}
+                      onChange={(e) => setForm({ ...form, usados: { ...form.usados, [canal]: e.target.value } })}
+                    >
+                      <option value="">—</option>
+                      {opcoesDoCanal(canal).map((c) => (
+                        <option key={`${c.tipo}-${c.valor}`} value={c.valor}>
+                          {c.tipo === 'telefone' ? formatarTelefone(c.valor) : c.valor} ({c.rotulo})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
                 <label>
                   Pessoa contatada
                   <select value={form.contato} onChange={(e) => setForm({ ...form, contato: e.target.value })}>
@@ -528,11 +602,11 @@ export default function PainelContato() {
                 <button type="button" className="crm-btn" onClick={() => setAcao(null)} disabled={salvando}>
                   Cancelar
                 </button>
-                <button type="submit" className="crm-btn crm-btn--registrar" disabled={salvando}>
+                <button type="button" className="crm-btn crm-btn--registrar" disabled={salvando} onClick={registrar}>
                   {salvando ? 'Registrando…' : 'Registrar tentativa'}
                 </button>
               </div>
-            </form>
+            </div>
           )}
           {acao === 'qualificacao' && <FormQualificacao {...formBase} />}
           {acao === 'desfecho' && <FormDesfecho {...formBase} />}

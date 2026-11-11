@@ -5,6 +5,8 @@ import React, { useState } from 'react'
 
 import { MOTIVOS_DESCARTE } from '@/collections/Crm/opcoes'
 
+// Atenção: a ficha fica DENTRO do formulário do Payload. Formulário dentro de formulário não existe em HTML
+// (o navegador ignora o de dentro e o "salvar" vira o salvar da empresa). Por isso: <div> + botão com onClick.
 // Formulários curtos da ficha da empresa. Cada um cria o registro já ligado à empresa
 // (o usuário nunca escolhe a empresa) e o sistema atualiza o status sozinho.
 
@@ -18,6 +20,10 @@ const MOTIVOS_PERDA = [
   { label: 'Sem retorno', value: 'sem_retorno' },
   { label: 'Outro', value: 'outro' },
 ]
+
+const semEnter = (e: React.KeyboardEvent) => {
+  if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') e.preventDefault()
+}
 
 const limpar = (o: Record<string, unknown>) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v !== undefined))
 const isoOuNada = (v: string) => (v ? new Date(v).toISOString() : undefined)
@@ -36,13 +42,13 @@ async function enviar(api: string, colecao: string, corpo: Record<string, unknow
   return false
 }
 
-function Botoes({ salvando, rotulo, aoCancelar }: { salvando: boolean; rotulo: string; aoCancelar: () => void }) {
+function Botoes({ salvando, rotulo, aoCancelar, aoSalvar }: { salvando: boolean; rotulo: string; aoCancelar: () => void; aoSalvar: () => void }) {
   return (
     <div className="crm-contato__botoes">
       <button type="button" className="crm-btn" onClick={aoCancelar} disabled={salvando}>
         Cancelar
       </button>
-      <button type="submit" className="crm-btn crm-btn--registrar" disabled={salvando}>
+      <button type="button" className="crm-btn crm-btn--registrar" disabled={salvando} onClick={aoSalvar}>
         {salvando ? 'Salvando…' : rotulo}
       </button>
     </div>
@@ -65,8 +71,7 @@ export function FormQualificacao({ api, empresa, aoSalvar, aoCancelar }: Base) {
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setF({ ...f, [k]: e.target.value })
 
-  const salvar = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const salvar = async () => {
     if (!f.resultado) return toast.error('Escolha o resultado da qualificação.')
     setSalvando(true)
     const ok = await enviar(api, 'crm-qualificacoes', {
@@ -84,7 +89,7 @@ export function FormQualificacao({ api, empresa, aoSalvar, aoCancelar }: Base) {
   }
 
   return (
-    <form className="crm-contato__form" onSubmit={salvar}>
+    <div className="crm-contato__form" role="form" onKeyDown={semEnter}>
       <h4>Qualificação</h4>
       <div className="crm-contato__linha">
         <label>
@@ -161,8 +166,8 @@ export function FormQualificacao({ api, empresa, aoSalvar, aoCancelar }: Base) {
         Observação
         <textarea rows={2} value={f.observacao} onChange={set('observacao')} />
       </label>
-      <Botoes salvando={salvando} rotulo="Registrar qualificação" aoCancelar={aoCancelar} />
-    </form>
+      <Botoes salvando={salvando} rotulo="Registrar qualificação" aoCancelar={aoCancelar} aoSalvar={salvar} />
+    </div>
   )
 }
 
@@ -172,8 +177,7 @@ export function FormDesfecho({ api, empresa, aoSalvar, aoCancelar }: Base) {
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setF({ ...f, [k]: e.target.value })
 
-  const salvar = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const salvar = async () => {
     if (!f.resultado) return toast.error('Escolha o resultado.')
     if (f.resultado === 'venda_nao_realizada' && !f.motivo) return toast.error('Informe o motivo.')
     setSalvando(true)
@@ -193,7 +197,7 @@ export function FormDesfecho({ api, empresa, aoSalvar, aoCancelar }: Base) {
   }
 
   return (
-    <form className="crm-contato__form" onSubmit={salvar}>
+    <div className="crm-contato__form" role="form" onKeyDown={semEnter}>
       <h4>Desfecho da venda</h4>
       <div className="crm-contato__linha">
         <label>
@@ -228,8 +232,8 @@ export function FormDesfecho({ api, empresa, aoSalvar, aoCancelar }: Base) {
         Observação
         <textarea rows={2} value={f.observacao} onChange={set('observacao')} />
       </label>
-      <Botoes salvando={salvando} rotulo="Registrar desfecho" aoCancelar={aoCancelar} />
-    </form>
+      <Botoes salvando={salvando} rotulo="Registrar desfecho" aoCancelar={aoCancelar} aoSalvar={salvar} />
+    </div>
   )
 }
 
@@ -239,8 +243,7 @@ export function FormTitular({ api, empresa, aoSalvar, aoCancelar }: Base) {
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setF({ ...f, [k]: e.target.value })
 
-  const salvar = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const salvar = async () => {
     if (!f.tipo) return toast.error('Escolha o tipo do pedido.')
     setSalvando(true)
     const ok = await enviar(api, 'crm-solicitacoes-titular', {
@@ -258,7 +261,7 @@ export function FormTitular({ api, empresa, aoSalvar, aoCancelar }: Base) {
   }
 
   return (
-    <form className="crm-contato__form" onSubmit={salvar}>
+    <div className="crm-contato__form" role="form" onKeyDown={semEnter}>
       <h4>Pedido do titular (LGPD)</h4>
       <div className="crm-contato__linha">
         <label>
@@ -280,7 +283,7 @@ export function FormTitular({ api, empresa, aoSalvar, aoCancelar }: Base) {
         Observação (sem dados pessoais)
         <textarea rows={2} value={f.observacao} onChange={set('observacao')} />
       </label>
-      <Botoes salvando={salvando} rotulo="Abrir pedido" aoCancelar={aoCancelar} />
-    </form>
+      <Botoes salvando={salvando} rotulo="Abrir pedido" aoCancelar={aoCancelar} aoSalvar={salvar} />
+    </div>
   )
 }

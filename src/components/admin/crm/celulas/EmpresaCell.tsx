@@ -8,6 +8,7 @@ import './celulas.css'
 
 // Coluna "Razão social" da lista de Empresas: nome em destaque, nome fantasia e cidade embaixo
 export default function EmpresaCell({ cellData, rowData, payload, linkURL }: DefaultServerCellComponentProps) {
+  if (!rowData) return <>{String(cellData ?? '')}</>
   const r = rowData as {
     id: number
     nomeFantasia?: string | null

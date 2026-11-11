@@ -364,3 +364,39 @@
   background: color-mix(in srgb, #2563eb 9%, var(--theme-elevation-0));
   font-size: 12.5px;
 }
+
+/* Canais da tentativa: mais de um de uma vez (ex.: WhatsApp + e-mail) */
+.crm-contato__canais {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--theme-elevation-600);
+}
+
+.crm-contato__canais > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.crm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-0);
+  color: var(--theme-elevation-700);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.crm-chip--on {
+  border-color: #2563eb;
+  background: color-mix(in srgb, #2563eb 12%, var(--theme-elevation-0));
+  color: var(--theme-elevation-900);
+  font-weight: 600;
+}
