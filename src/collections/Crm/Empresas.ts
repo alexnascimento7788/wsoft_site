@@ -50,6 +50,7 @@ export const Empresas: CollectionConfig = {
     description: 'O centro do CRM: cada empresa reúne as pessoas de contato, as tentativas, a qualificação e o desfecho.',
     defaultColumns: ['razaoSocial', 'canais', 'status', 'vendedor', 'retornarEm', 'meuDia'],
     listSearchableFields: ['razaoSocial', 'nomeFantasia', 'cnpj', 'cidade'],
+    components: { beforeListTable: ['@/components/admin/crm/LegendaEmpresas'] },
   },
   defaultSort: 'ordemImportacao',
   hooks: {

@@ -15,7 +15,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { isCrmAdminUser } from '@/access/roles'
 import { STATUS_LEAD } from '@/collections/Crm/opcoes'
@@ -62,7 +62,7 @@ const rotulo = (lista: { label: string; value: string }[], v: string | null | un
 const dataHora = (iso: string) =>
   new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 
-const vazio = { canal: 'ligacao', telefoneUsado: '', contato: '', resultado: '', observacao: '', proximoPasso: '', proximoPassoData: '' }
+const vazio = { canal: 'ligacao', telefoneUsado: '', contato: '', resultado: '', observacao: '', proximoPasso: '', proximoPassoData: '', quando: '' }
 
 const nomeUsuario = (u: Empresa['vendedor']) =>
   u && typeof u === 'object' ? u.name || u.email?.split('@')[0] || `Usuário ${u.id}` : u ? `Usuário ${u}` : null
@@ -173,6 +173,21 @@ export default function PainelContato() {
     void carregar()
   }, [carregar])
 
+  // Empresa já marcada como "Em contato" (ou adiante) sem nenhuma tentativa gravada:
+  // abre o registro da tentativa logo ao entrar, para o contato entrar no histórico e no Meu dia
+  const [semTentativa, setSemTentativa] = useState(false)
+  const conferido = useRef(false)
+  useEffect(() => {
+    if (!empresa || conferido.current) return
+    conferido.current = true
+    const tentativas = eventos.filter((e) => e.tipo === 'tentativa').length
+    if (empresa.status !== 'na_fila' && !empresa.naoContatar && tentativas === 0) {
+      setSemTentativa(true)
+      setForm(vazio)
+      setAcao('tentativa')
+    }
+  }, [empresa, eventos])
+
   if (!id) {
     return (
       <div className="crm-contato crm-contato--novo">
@@ -247,7 +262,7 @@ export default function PainelContato() {
         observacao: form.observacao || undefined,
         proximoPasso: form.proximoPasso || undefined,
         proximoPassoData: form.proximoPassoData ? new Date(form.proximoPassoData).toISOString() : undefined,
-        dataHora: new Date().toISOString(),
+        dataHora: form.quando ? new Date(form.quando).toISOString() : new Date().toISOString(),
       }),
     })
     setSalvando(false)
@@ -309,6 +324,12 @@ export default function PainelContato() {
         </div>
       </div>
       {empresa.retornarEm && <p className="crm-ficha__retorno">Retornar em {dataHora(empresa.retornarEm)}</p>}
+      {semTentativa && eventos.every((e) => e.tipo !== 'tentativa') && (
+        <p className="crm-ficha__pendente">
+          Esta empresa está como <strong>{rotulo(STATUS_LEAD, empresa.status)}</strong>, mas nenhuma tentativa foi registrada.
+          Preencha abaixo como foi o contato: ele entra no histórico, na aba Tentativas e no Meu dia.
+        </p>
+      )}
 
       {bloqueado ? (
         <p className="crm-contato__bloqueio">
@@ -463,6 +484,15 @@ export default function PainelContato() {
                     </option>
                   ))}
                 </select>
+              </label>
+              <label className="crm-contato__quando-campo">
+                Quando foi {semTentativa ? '(o contato que você já fez)' : '(em branco = agora)'}
+                <input
+                  type="datetime-local"
+                  value={form.quando}
+                  max={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                  onChange={(e) => setForm({ ...form, quando: e.target.value })}
+                />
               </label>
               {form.resultado === 'numero_invalido' && (
                 <small className="crm-contato__aviso">O telefone usado será marcado como inválido e sai do sorteio.</small>

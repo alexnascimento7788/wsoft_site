@@ -355,3 +355,12 @@
 .crm-evento--desfecho .crm-contato__oque strong::before {
   background: #16a34a;
 }
+
+.crm-ficha__pendente {
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border-left: 4px solid #2563eb;
+  background: color-mix(in srgb, #2563eb 9%, var(--theme-elevation-0));
+  font-size: 12.5px;
+}

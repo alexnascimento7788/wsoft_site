@@ -29,3 +29,22 @@ export const formatarTelefone = (n: string) =>
     : n.length === 10
       ? `(${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}`
       : n
+
+// Situação da linha na lista de Empresas (faixa colorida + legenda)
+export const SITUACOES = [
+  { valor: 'nao_contatado', rotulo: 'Não contatado', cor: '#F4791F' },
+  { valor: 'em_contato', rotulo: 'Em contato', cor: '#2563EB' },
+  { valor: 'ganho', rotulo: 'Venda realizada', cor: '#16A34A' },
+  { valor: 'perdido', rotulo: 'Perdido / descartado', cor: '#6B7280' },
+  { valor: 'nao_contatar', rotulo: 'Não contatar', cor: '#DC2626' },
+] as const
+
+export type Situacao = (typeof SITUACOES)[number]['valor']
+
+export function situacaoDaEmpresa(status: string | null | undefined, naoContatar?: boolean | null): Situacao {
+  if (naoContatar) return 'nao_contatar'
+  if (!status || status === 'na_fila') return 'nao_contatado'
+  if (status === 'venda_realizada') return 'ganho'
+  if (status === 'venda_nao_realizada' || status === 'descartado') return 'perdido'
+  return 'em_contato'
+}

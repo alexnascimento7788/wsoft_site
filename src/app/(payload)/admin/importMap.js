@@ -5,6 +5,7 @@ import { default as default_21bcefebf9f740a304b721c6eb9a7b13 } from '@/component
 import { default as default_1ec9b7c966f634545428cc16caf3cddb } from '@/components/admin/crm/celulas/CanaisCell'
 import { default as default_d01c27c7406dd144babfbc143fd29101 } from '@/components/admin/crm/celulas/StatusCell'
 import { default as default_f72ae6ac9653a121de6c1bc48f5fd9d4 } from '@/components/admin/crm/celulas/PessoaCell'
+import { default as default_c2bd0139b5b8612d7db21e816401d9ba } from '@/components/admin/crm/LegendaEmpresas'
 import { default as default_e7bb866ab8e3e39cfe554c1ed9d4c348 } from '@/components/admin/crm/AvisoNasceDaEmpresa'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -38,6 +39,7 @@ export const importMap = {
   "@/components/admin/crm/celulas/CanaisCell#default": default_1ec9b7c966f634545428cc16caf3cddb,
   "@/components/admin/crm/celulas/StatusCell#default": default_d01c27c7406dd144babfbc143fd29101,
   "@/components/admin/crm/celulas/PessoaCell#default": default_f72ae6ac9653a121de6c1bc48f5fd9d4,
+  "@/components/admin/crm/LegendaEmpresas#default": default_c2bd0139b5b8612d7db21e816401d9ba,
   "@/components/admin/crm/AvisoNasceDaEmpresa#default": default_e7bb866ab8e3e39cfe554c1ed9d4c348,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,

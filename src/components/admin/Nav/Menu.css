@@ -1,0 +1,143 @@
+/* Menu lateral Wsoft: áreas com cor própria, seções, ícones e contadores */
+.wmenu {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+
+.wmenu__area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wmenu__area-titulo,
+.wmenu__secao-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.wmenu__area-titulo {
+  padding: 4px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--theme-elevation-500);
+}
+
+.wmenu__area-titulo--ativa {
+  color: var(--theme-elevation-800);
+}
+
+.wmenu__area-marca {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--area);
+}
+
+.wmenu__seta {
+  margin-left: auto;
+  color: var(--theme-elevation-400);
+  transition: transform 0.15s;
+}
+
+.wmenu__seta--fechada {
+  transform: rotate(-90deg);
+}
+
+.wmenu__secao {
+  display: flex;
+  flex-direction: column;
+}
+
+.wmenu__secao-titulo {
+  padding: 6px 6px 3px 22px;
+  font-size: 11px;
+  color: var(--theme-elevation-450, var(--theme-elevation-500));
+}
+
+.wmenu__secao ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wmenu__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 8px 5px 6px;
+  border-radius: 8px;
+  color: var(--theme-elevation-800);
+  text-decoration: none;
+}
+
+.wmenu__item:hover {
+  background: var(--theme-elevation-50);
+}
+
+.wmenu__item--ativo {
+  background: color-mix(in srgb, var(--area) 14%, transparent);
+  font-weight: 600;
+}
+
+.wmenu__item--ativo::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--area);
+}
+
+.wmenu__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  color: var(--area);
+  background: color-mix(in srgb, var(--area) 12%, transparent);
+}
+
+.wmenu__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wmenu__contador {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-elevation-700);
+  background: var(--theme-elevation-100);
+}
+
+.wmenu__contador--alerta {
+  color: #fff;
+  background: var(--area);
+}
