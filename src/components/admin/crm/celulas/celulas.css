@@ -1,0 +1,168 @@
+/* Células da lista de Empresas */
+.crm-cel-empresa {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.crm-cel-empresa__nome {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--theme-elevation-900);
+}
+
+.crm-cel-empresa:hover .crm-cel-empresa__nome {
+  color: #e0650c;
+}
+
+.crm-cel-empresa__sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 11.5px;
+  color: var(--theme-elevation-500);
+}
+
+.crm-cel-empresa__sub span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.crm-cel-empresa__bloq {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 4px;
+  color: var(--theme-error-600);
+  background: var(--theme-error-100);
+}
+
+.crm-cel-canais {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.crm-cel-canal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  color: var(--theme-elevation-300);
+  background: var(--theme-elevation-50);
+  opacity: 0.55;
+}
+
+.crm-cel-canal--ativo {
+  opacity: 1;
+  color: var(--cor);
+  background: color-mix(in srgb, var(--cor) 14%, transparent);
+}
+
+.crm-cel-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--cor) 82%, var(--theme-elevation-1000));
+  background: color-mix(in srgb, var(--cor) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cor) 30%, transparent);
+}
+
+.crm-cel-status__ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cor);
+}
+
+.crm-cel-pessoa {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.crm-cel-pessoa__bola {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.crm-cel-pessoa--vazio {
+  font-size: 11.5px;
+  color: var(--theme-elevation-400);
+  font-style: italic;
+}
+
+.crm-cel-meudia-grupo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crm-cel-meudia {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, #f4791f 45%, transparent);
+  background: transparent;
+  color: #c75a10;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.crm-cel-meudia:hover:not(:disabled) {
+  background: color-mix(in srgb, #f4791f 12%, transparent);
+}
+
+.crm-cel-meudia--marcado {
+  border-color: transparent;
+  background: color-mix(in srgb, #16a34a 14%, transparent);
+  color: #15803d;
+}
+
+.crm-cel-meudia-data {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-0);
+  color: var(--theme-elevation-800);
+}
+
+html[data-theme='dark'] .crm-cel-status {
+  color: color-mix(in srgb, var(--cor) 70%, #fff);
+}
+
+html[data-theme='dark'] .crm-cel-meudia {
+  color: #f9a25e;
+}
+
+html[data-theme='dark'] .crm-cel-meudia--marcado {
+  color: #4ade80;
+}

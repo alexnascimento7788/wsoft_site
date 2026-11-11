@@ -23,7 +23,10 @@ const BLOCOS = [
   },
   {
     grupo: 'CRM',
-    paineis: [{ path: '/crm', label: '🎯 Painel do CRM', id: 'nav-crm' }],
+    paineis: [
+      { path: '/crm', label: '🎯 Painel do CRM', id: 'nav-crm' },
+      { path: '/crm/meu-dia', label: '📅 Meu dia', id: 'nav-crm-meu-dia' },
+    ],
     pode: canAccessCrmUser,
   },
   { grupo: 'Site' },

@@ -75,7 +75,7 @@ export const CrmConfiguracao: GlobalConfig = {
         {
           label: 'Prioridade da fila',
           description:
-            'A prioridade só ordena a fila e os filtros. Nunca exclui o lead e pode ser corrigida em cada empresa.',
+            'A prioridade só define a ordem do sorteio do Meu dia (Alta primeiro, depois Média, depois Baixa). É calculada pelo ramo de atividade (CNAE) da empresa, nunca exclui o lead e pode ser corrigida em cada empresa.',
           fields: [
             listaCnae(
               'cnaesAlta',
@@ -114,6 +114,16 @@ export const CrmConfiguracao: GlobalConfig = {
               admin: {
                 description:
                   'Sem nenhuma conversa, o lead só pode ser descartado (empresa inativa, número inexistente, sem canal) depois deste número de tentativas registradas.',
+              },
+            },
+            {
+              name: 'meuDiaLeadsSemVendedor',
+              label: 'Meu dia: o sorteio também pega leads sem vendedor',
+              type: 'checkbox',
+              defaultValue: true,
+              admin: {
+                description:
+                  'Ligado: o sorteio do Meu dia usa os leads do vendedor e os que ainda não têm vendedor (estes passam a ser de quem sorteou). Desligado: só os leads já atribuídos ao vendedor.',
               },
             },
           ],

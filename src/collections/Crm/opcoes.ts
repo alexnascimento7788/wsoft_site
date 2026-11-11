@@ -18,6 +18,13 @@ export const STATUS_LEAD: Opcao[] = [
   { label: 'Descartado', value: 'descartado' },
 ]
 
+// Canais que a empresa tem (calculados): ícones na lista
+export const CANAIS_EMPRESA: Opcao[] = [
+  { label: 'WhatsApp', value: 'whatsapp' },
+  { label: 'Telefone', value: 'telefone' },
+  { label: 'E-mail', value: 'email' },
+]
+
 export const PRIORIDADES: Opcao[] = [
   { label: 'Alta', value: 'alta' },
   { label: 'Média', value: 'media' },

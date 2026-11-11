@@ -27,6 +27,7 @@ export const LotesImportacao: CollectionConfig = {
     hidden: hideFromNonCrmAdmins,
     useAsTitle: 'nome',
     defaultColumns: ['nome', 'origem', 'status', 'criados', 'erros', 'createdAt'],
+    components: { beforeList: ['@/components/admin/crm/AvisoNasceDaEmpresa'] },
   },
   defaultSort: '-createdAt',
   hooks: {

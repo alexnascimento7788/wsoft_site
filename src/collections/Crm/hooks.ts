@@ -1,8 +1,17 @@
-import { Forbidden, ValidationError, type CollectionBeforeChangeHook } from 'payload'
+import {
+  Forbidden,
+  ValidationError,
+  type CollectionAfterChangeHook,
+  type CollectionAfterDeleteHook,
+  type CollectionBeforeChangeHook,
+  type CollectionBeforeValidateHook,
+  type PayloadRequest,
+} from 'payload'
 
 import { isCrmAdminUser } from '../../access/roles'
 import { normalizarCnpj, normalizarTelefone, soDigitos } from '../../crm/importacao/normalizar'
 import { criarCalculoPrioridade, type RegraPrioridade } from '../../crm/importacao/prioridade'
+import { calcularCanais } from '../../crm/canais'
 import { regraPrioridadePadrao } from '../../globals/CrmConfiguracao'
 
 // Na criação, grava quem registrou (relação + nome)
@@ -125,5 +134,59 @@ export const exigirEmpresaDoUsuario: CollectionBeforeChangeHook = async ({ data,
     req,
   })
   if (visivel.docs.length === 0) throw new Forbidden(req.t)
+  return data
+}
+
+const idRel = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number | null | undefined))
+
+const pessoasDaEmpresa = (req: PayloadRequest, empresa: number) =>
+  req.payload
+    .find({
+      collection: 'crm-contatos',
+      where: { empresa: { equals: empresa } },
+      depth: 0,
+      pagination: false,
+      select: { email: true, naoContatar: true, telefones: true },
+      overrideAccess: true, // só para saber quais canais existem; nada é devolvido a quem pediu
+      req,
+    })
+    .then((r) => r.docs)
+
+// Empresa: recalcula os canais (WhatsApp / telefone / e-mail) a cada gravação
+export const atualizarCanaisEmpresa: CollectionBeforeChangeHook = async ({ data, originalDoc, req }) => {
+  const telefones = data.telefones ?? originalDoc?.telefones
+  const pessoas = originalDoc?.id ? await pessoasDaEmpresa(req, originalDoc.id) : []
+  data.canais = calcularCanais(telefones, pessoas)
+  return data
+}
+
+async function recalcularCanais(req: PayloadRequest, empresa: number | null | undefined) {
+  if (!empresa) return
+  const atual = await req.payload
+    .findByID({ collection: 'crm-empresas', id: empresa, depth: 0, overrideAccess: true, req, disableErrors: true })
+    .catch(() => null)
+  if (!atual) return
+  const canais = calcularCanais(atual.telefones, await pessoasDaEmpresa(req, empresa))
+  if (JSON.stringify(canais) === JSON.stringify(atual.canais ?? [])) return
+  await req.payload.update({ collection: 'crm-empresas', id: empresa, data: { canais }, overrideAccess: true, req })
+}
+
+// Contato criado, alterado ou apagado: os ícones de canais da empresa acompanham
+export const canaisAposContato: CollectionAfterChangeHook = async ({ doc, req }) => {
+  await recalcularCanais(req, idRel(doc.empresa))
+  return doc
+}
+export const canaisAposApagarContato: CollectionAfterDeleteHook = async ({ doc, req }) => {
+  await recalcularCanais(req, idRel(doc.empresa))
+  return doc
+}
+
+// Solicitação de titular: protocolo gerado sozinho quando não informado
+export const gerarProtocolo: CollectionBeforeValidateHook = ({ data, operation }) => {
+  if (operation === 'create' && data && !data.protocolo) {
+    const d = new Date()
+    const dia = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+    data.protocolo = `LGPD-${dia}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
+  }
   return data
 }

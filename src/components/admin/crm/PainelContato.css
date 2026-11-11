@@ -215,3 +215,143 @@
   font-style: normal;
   color: var(--theme-elevation-600);
 }
+
+/* ——— Cabeçalho da ficha, ações e histórico ——— */
+.crm-contato--novo {
+  color: var(--theme-elevation-600);
+}
+
+.crm-ficha__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 10px;
+}
+
+.crm-ficha__quem h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.crm-ficha__sub {
+  font-size: 12px;
+  color: var(--theme-elevation-500);
+}
+
+.crm-ficha__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-ficha__vendedor {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--theme-elevation-800);
+  background: var(--theme-elevation-100);
+}
+
+.crm-ficha__vendedor--vazio {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--theme-elevation-500);
+  background: var(--theme-elevation-50);
+}
+
+.crm-ficha__retorno {
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: #7c3aed;
+}
+
+.crm-ficha__envio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #f4791f 9%, var(--theme-elevation-0));
+  font-size: 12.5px;
+}
+
+.crm-btn--icone {
+  padding: 5px 7px;
+  color: var(--theme-elevation-500);
+}
+
+.crm-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+.crm-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-0);
+  color: var(--theme-elevation-800);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.crm-acao:hover {
+  border-color: #f4791f;
+}
+
+.crm-acao--ativa {
+  border-color: #f4791f;
+  background: color-mix(in srgb, #f4791f 12%, transparent);
+  color: #c75a10;
+}
+
+.crm-contato__form h4,
+.crm-contato__historico h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crm-evento {
+  position: relative;
+}
+
+.crm-evento .crm-contato__oque strong::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+  vertical-align: 1px;
+}
+
+.crm-evento--status .crm-contato__oque strong::before {
+  background: #f4791f;
+}
+
+.crm-evento--qualificacao .crm-contato__oque strong::before {
+  background: #0d9488;
+}
+
+.crm-evento--desfecho .crm-contato__oque strong::before {
+  background: #16a34a;
+}

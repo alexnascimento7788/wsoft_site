@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { canAccessCrm, crmLeadAccess, hideFromNonCrm, isCrmAdmin } from '../../access/roles'
+import { aplicarEfeitosDaQualificacao } from './efeitosContato'
 import { exigirEmpresaDoUsuario, preencherRegistradoPor } from './hooks'
 import { GRUPO_CRM, MOTIVOS_DESCARTE, camposRegistradoPor } from './opcoes'
 
@@ -18,10 +19,12 @@ export const Qualificacoes: CollectionConfig = {
     group: GRUPO_CRM,
     hidden: hideFromNonCrm,
     defaultColumns: ['createdAt', 'empresa', 'resultado', 'interesse', 'registradoPorNome'],
+    components: { beforeList: ['@/components/admin/crm/AvisoNasceDaEmpresa'] },
   },
   defaultSort: '-createdAt',
   hooks: {
     beforeChange: [exigirEmpresaDoUsuario, preencherRegistradoPor],
+    afterChange: [aplicarEfeitosDaQualificacao],
   },
   fields: [
     {

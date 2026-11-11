@@ -17,6 +17,7 @@ export const Movimentacoes: CollectionConfig = {
     group: GRUPO_CRM,
     hidden: hideFromNonCrm,
     defaultColumns: ['createdAt', 'empresa', 'de', 'para', 'usuarioNome'],
+    components: { beforeList: ['@/components/admin/crm/AvisoNasceDaEmpresa'] },
   },
   defaultSort: '-createdAt',
   fields: [

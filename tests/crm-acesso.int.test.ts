@@ -285,7 +285,7 @@ describe.skipIf(!local)('CRM — acesso por perfil (Payload + banco descartável
         has_table_privilege('authenticated', 'public.' || tablename, 'SELECT') AS auth
       FROM pg_tables WHERE schemaname='public' AND left(tablename,4)='crm_'`)
     await pool.end()
-    expect(rows.length).toBe(18)
+    expect(rows.length).toBe(21) // + crm_empresas_canais, crm_dias, crm_dia_itens (Meu dia)
     for (const r of rows) {
       expect({ t: r.tablename, rls: r.rowsecurity, anon: r.anon, auth: r.auth }).toEqual({
         t: r.tablename,

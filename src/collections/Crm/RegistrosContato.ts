@@ -11,7 +11,7 @@ export { CANAIS_CONTATO, RESULTADOS_COM_CONVERSA, RESULTADOS_CONTATO }
 // Cada tentativa de contato registrada pelo vendedor. Histórico: só crm_admin altera ou apaga.
 export const RegistrosContato: CollectionConfig = {
   slug: 'crm-registros-contato',
-  labels: { singular: 'Registro de contato', plural: 'Registros de contato' },
+  labels: { singular: 'Tentativa de contato', plural: 'Tentativas de contato' },
   access: {
     create: canAccessCrm, // a empresa precisa ser do usuário: verificado no hook
     delete: isCrmAdmin,
@@ -22,6 +22,7 @@ export const RegistrosContato: CollectionConfig = {
     group: GRUPO_CRM,
     hidden: hideFromNonCrm,
     defaultColumns: ['dataHora', 'empresa', 'canal', 'resultado', 'registradoPorNome'],
+    components: { beforeList: ['@/components/admin/crm/AvisoNasceDaEmpresa'] },
   },
   defaultSort: '-dataHora',
   hooks: {

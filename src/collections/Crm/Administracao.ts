@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { hideFromNonCrmAdmins, isCrmAdmin } from '../../access/roles'
-import { preencherRegistradoPor } from './hooks'
+import { gerarProtocolo, preencherRegistradoPor } from './hooks'
 import { GRUPO_CRM, camposRegistradoPor } from './opcoes'
 
 const soCrmAdmin = { create: isCrmAdmin, delete: isCrmAdmin, read: isCrmAdmin, update: isCrmAdmin }
@@ -73,15 +73,23 @@ export const SolicitacoesTitular: CollectionConfig = {
     group: GRUPO_CRM,
     hidden: hideFromNonCrmAdmins,
     useAsTitle: 'protocolo',
-    defaultColumns: ['protocolo', 'tipo', 'status', 'recebidaEm'],
+    defaultColumns: ['protocolo', 'empresa', 'tipo', 'status', 'recebidaEm'],
+    components: { beforeList: ['@/components/admin/crm/AvisoNasceDaEmpresa'] },
   },
   defaultSort: '-recebidaEm',
-  hooks: { beforeChange: [preencherRegistradoPor] },
+  hooks: { beforeValidate: [gerarProtocolo], beforeChange: [preencherRegistradoPor] },
   fields: [
     {
       type: 'row',
       fields: [
-        { name: 'protocolo', label: 'Protocolo', type: 'text', required: true, unique: true, admin: { width: '30%' } },
+        {
+          name: 'protocolo',
+          label: 'Protocolo',
+          type: 'text',
+          required: true,
+          unique: true,
+          admin: { width: '30%', description: 'Gerado sozinho se ficar em branco.' },
+        },
         {
           name: 'tipo',
           label: 'Tipo',

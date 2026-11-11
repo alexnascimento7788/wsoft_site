@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { canAccessCrm, crmLeadAccess, hideFromNonCrm, isCrmAdmin } from '../../access/roles'
-import { exigirEmpresaDoUsuario, registrarNaoContatar } from './hooks'
+import { canaisAposApagarContato, canaisAposContato, exigirEmpresaDoUsuario, registrarNaoContatar } from './hooks'
 import { GRUPO_CRM, campoTelefones, camposNaoContatar, camposOrigem } from './opcoes'
 
 export const PAPEIS_CONTATO = [
@@ -11,10 +11,11 @@ export const PAPEIS_CONTATO = [
   { label: 'Indefinido', value: 'indefinido' },
 ]
 
-// Pessoas de contato de cada empresa
+// Pessoas de contato de cada empresa. Nascem dentro da ficha da empresa (aba "Pessoas de contato");
+// depois de criada, a pessoa não muda de empresa.
 export const Contatos: CollectionConfig = {
   slug: 'crm-contatos',
-  labels: { singular: 'Contato', plural: 'Contatos' },
+  labels: { singular: 'Pessoa de contato', plural: 'Pessoas de contato' },
   access: {
     create: canAccessCrm, // a empresa precisa ser do usuário: verificado no hook
     delete: isCrmAdmin,
@@ -25,11 +26,15 @@ export const Contatos: CollectionConfig = {
     group: GRUPO_CRM,
     hidden: hideFromNonCrm,
     useAsTitle: 'nome',
+    description: 'As pessoas que atendem em cada empresa. Para incluir alguém, abra a empresa e use a aba “Pessoas de contato”.',
     defaultColumns: ['nome', 'empresa', 'papel', 'email'],
     listSearchableFields: ['nome', 'email'],
+    components: { beforeList: ['@/components/admin/crm/AvisoNasceDaEmpresa'] },
   },
   hooks: {
     beforeChange: [exigirEmpresaDoUsuario, registrarNaoContatar],
+    afterChange: [canaisAposContato],
+    afterDelete: [canaisAposApagarContato],
   },
   fields: [
     {
@@ -39,6 +44,9 @@ export const Contatos: CollectionConfig = {
       relationTo: 'crm-empresas',
       required: true,
       index: true,
+      // Definida só na criação: evita trocar a pessoa de empresa por um clique errado
+      access: { update: () => false },
+      admin: { description: 'Fixa depois de salvar. Pessoa na empresa errada: apague e cadastre na empresa certa.' },
     },
     {
       type: 'row',

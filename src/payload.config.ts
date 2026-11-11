@@ -10,6 +10,7 @@ import { Contatos } from './collections/Crm/Contatos'
 import { Desfechos } from './collections/Crm/Desfechos'
 import { Empresas } from './collections/Crm/Empresas'
 import { LotesImportacao } from './collections/Crm/LotesImportacao'
+import { DiaItens, Dias } from './collections/Crm/MeuDia'
 import { Movimentacoes } from './collections/Crm/Movimentacoes'
 import { Qualificacoes } from './collections/Crm/Qualificacoes'
 import { RegistrosContato } from './collections/Crm/RegistrosContato'
@@ -61,6 +62,12 @@ export default buildConfig({
           exact: true,
           meta: { title: 'CRM' },
         },
+        meuDia: {
+          Component: '@/components/admin/MeuDiaView',
+          path: '/crm/meu-dia',
+          exact: true,
+          meta: { title: 'Meu dia' },
+        },
       },
     },
     meta: {
@@ -103,6 +110,8 @@ export default buildConfig({
     Qualificacoes,
     Desfechos,
     Movimentacoes,
+    Dias,
+    DiaItens,
     LotesImportacao,
     ModelosImportacao,
     SolicitacoesTitular,

@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { canAccessCrm, crmLeadAccess, hideFromNonCrm, isCrmAdmin } from '../../access/roles'
+import { aplicarEfeitosDoDesfecho } from './efeitosContato'
 import { exigirEmpresaDoUsuario, preencherRegistradoPor } from './hooks'
 import { GRUPO_CRM, camposRegistradoPor } from './opcoes'
 
@@ -27,10 +28,12 @@ export const Desfechos: CollectionConfig = {
     group: GRUPO_CRM,
     hidden: hideFromNonCrm,
     defaultColumns: ['data', 'empresa', 'resultado', 'valor', 'registradoPorNome'],
+    components: { beforeList: ['@/components/admin/crm/AvisoNasceDaEmpresa'] },
   },
   defaultSort: '-data',
   hooks: {
     beforeChange: [exigirEmpresaDoUsuario, preencherRegistradoPor],
+    afterChange: [aplicarEfeitosDoDesfecho],
   },
   fields: [
     {

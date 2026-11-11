@@ -1,0 +1,27 @@
+.crm-aviso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--theme-elevation-700);
+  background: color-mix(in srgb, #f4791f 9%, var(--theme-elevation-0));
+  border-left: 4px solid #f4791f;
+}
+
+.crm-aviso svg {
+  flex-shrink: 0;
+  color: #f4791f;
+}
+
+/* Listas que nascem da empresa: sem "Criar novo" (o registro nasce na ficha da empresa) */
+.collection-list--crm-contatos .list-create-new-doc__create-new-button,
+.collection-list--crm-registros-contato .list-create-new-doc__create-new-button,
+.collection-list--crm-qualificacoes .list-create-new-doc__create-new-button,
+.collection-list--crm-desfechos .list-create-new-doc__create-new-button,
+.collection-list--crm-solicitacoes-titular .list-create-new-doc__create-new-button,
+.collection-list--crm-lotes-importacao .list-create-new-doc__create-new-button {
+  display: none;
+}

@@ -77,6 +77,8 @@ export interface Config {
     'crm-qualificacoes': CrmQualificacoe;
     'crm-desfechos': CrmDesfecho;
     'crm-movimentacoes': CrmMovimentacoe;
+    'crm-dias': CrmDia;
+    'crm-dia-itens': CrmDiaIten;
     'crm-lotes-importacao': CrmLotesImportacao;
     'crm-modelos-importacao': CrmModelosImportacao;
     'crm-solicitacoes-titular': CrmSolicitacoesTitular;
@@ -89,7 +91,16 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    'crm-empresas': {
+      pessoas: 'crm-contatos';
+      tentativas: 'crm-registros-contato';
+      qualificacoesDaEmpresa: 'crm-qualificacoes';
+      desfechosDaEmpresa: 'crm-desfechos';
+      historicoStatus: 'crm-movimentacoes';
+      solicitacoesTitular: 'crm-solicitacoes-titular';
+    };
+  };
   collectionsSelect: {
     'centros-de-custo': CentrosDeCustoSelect<false> | CentrosDeCustoSelect<true>;
     contas: ContasSelect<false> | ContasSelect<true>;
@@ -101,6 +112,8 @@ export interface Config {
     'crm-qualificacoes': CrmQualificacoesSelect<false> | CrmQualificacoesSelect<true>;
     'crm-desfechos': CrmDesfechosSelect<false> | CrmDesfechosSelect<true>;
     'crm-movimentacoes': CrmMovimentacoesSelect<false> | CrmMovimentacoesSelect<true>;
+    'crm-dias': CrmDiasSelect<false> | CrmDiasSelect<true>;
+    'crm-dia-itens': CrmDiaItensSelect<false> | CrmDiaItensSelect<true>;
     'crm-lotes-importacao': CrmLotesImportacaoSelect<false> | CrmLotesImportacaoSelect<true>;
     'crm-modelos-importacao': CrmModelosImportacaoSelect<false> | CrmModelosImportacaoSelect<true>;
     'crm-solicitacoes-titular': CrmSolicitacoesTitularSelect<false> | CrmSolicitacoesTitularSelect<true>;
@@ -322,37 +335,39 @@ export interface Fornecedore {
   createdAt: string;
 }
 /**
+ * O centro do CRM: cada empresa reúne as pessoas de contato, as tentativas, a qualificação e o desfecho.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "crm-empresas".
  */
 export interface CrmEmpresa {
   id: number;
+  pessoas?: {
+    docs?: (number | CrmContato)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   razaoSocial: string;
   nomeFantasia?: string | null;
   /**
-   * 14 dígitos, só números.
+   * 14 dígitos; pode colar com pontos e barra.
    */
   cnpj: string;
-  /**
-   * 8 primeiros dígitos.
-   */
-  raizCnpj?: string | null;
-  tipo?: ('matriz' | 'filial') | null;
   situacaoCadastral?: string | null;
   /**
    * Faixa informada pela fonte.
    */
   faixaFundacao?: string | null;
-  logradouro?: string | null;
-  numero?: string | null;
-  complemento?: string | null;
-  bairro?: string | null;
   cidade?: string | null;
   uf?: string | null;
   /**
    * 8 dígitos
    */
   cep?: string | null;
+  bairro?: string | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
   telefones?:
     | {
         /**
@@ -376,6 +391,63 @@ export interface CrmEmpresa {
       }[]
     | null;
   observacoes?: string | null;
+  tentativas?: {
+    docs?: (number | CrmRegistrosContato)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  qualificacoesDaEmpresa?: {
+    docs?: (number | CrmQualificacoe)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  desfechosDaEmpresa?: {
+    docs?: (number | CrmDesfecho)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  historicoStatus?: {
+    docs?: (number | CrmMovimentacoe)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  solicitacoesTitular?: {
+    docs?: (number | CrmSolicitacoesTitular)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * 8 primeiros dígitos.
+   */
+  raizCnpj?: string | null;
+  tipo?: ('matriz' | 'filial') | null;
+  ordemImportacao?: number | null;
+  /**
+   * Ordem do sorteio do Meu dia (Alta primeiro). Vem do ramo de atividade (CNAE).
+   */
+  prioridade?: ('alta' | 'media' | 'baixa') | null;
+  prioridadeCalculada?: ('alta' | 'media' | 'baixa') | null;
+  /**
+   * Em branco = usa a calculada.
+   */
+  prioridadeManual?: ('alta' | 'media' | 'baixa') | null;
+  /**
+   * Calculado sozinho a partir dos telefones e e-mails da empresa e das pessoas.
+   */
+  canais?: ('whatsapp' | 'telefone' | 'email')[] | null;
+  /**
+   * Sem telefone e sem e-mail: fora do sorteio.
+   */
+  semCanalContato?: boolean | null;
+  baseLegal?: ('legitimo_interesse' | 'consentimento' | 'outra') | null;
+  alertas?: ('situacao_nao_ativa' | 'em_liquidacao' | 'recuperacao_judicial')[] | null;
+  origem?: ('boa_vista' | 'instagram' | 'indicacao' | 'base_wsoft' | 'site' | 'outra') | null;
+  /**
+   * Ex.: Boa Vista
+   */
+  fornecedorDado?: string | null;
+  lote?: (number | null) | CrmLotesImportacao;
+  dataImportacao?: string | null;
   status:
     | 'na_fila'
     | 'em_contato'
@@ -386,18 +458,9 @@ export interface CrmEmpresa {
     | 'venda_nao_realizada'
     | 'retornar_depois'
     | 'descartado';
-  retornarEm?: string | null;
   motivoDescarte?: ('sem_perfil' | 'sem_interesse' | 'empresa_inativa' | 'sem_canal' | 'outro') | null;
-  /**
-   * Só ordena a fila. Não é a classificação do lead.
-   */
-  prioridade?: ('alta' | 'media' | 'baixa') | null;
-  prioridadeCalculada?: ('alta' | 'media' | 'baixa') | null;
-  /**
-   * Em branco = usa a calculada.
-   */
-  prioridadeManual?: ('alta' | 'media' | 'baixa') | null;
   vendedor?: (number | null) | User;
+  retornarEm?: string | null;
   apresentador?: (number | null) | User;
   apresentacaoData?: string | null;
   /**
@@ -406,12 +469,48 @@ export interface CrmEmpresa {
   naoContatar?: boolean | null;
   naoContatarEm?: string | null;
   naoContatarPor?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * As pessoas que atendem em cada empresa. Para incluir alguém, abra a empresa e use a aba “Pessoas de contato”.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-contatos".
+ */
+export interface CrmContato {
+  id: number;
   /**
-   * Sem telefone e sem e-mail: fora da fila de ligação.
+   * Fixa depois de salvar. Pessoa na empresa errada: apague e cadastre na empresa certa.
    */
-  semCanalContato?: boolean | null;
-  alertas?: ('situacao_nao_ativa' | 'em_liquidacao' | 'recuperacao_judicial')[] | null;
-  ordemImportacao?: number | null;
+  empresa: number | CrmEmpresa;
+  nome?: string | null;
+  email?: string | null;
+  papel?: ('decisor' | 'influenciador' | 'operacional' | 'indefinido') | null;
+  /**
+   * Nome do contato igual à razão social.
+   */
+  empresarioIndividual?: boolean | null;
+  telefones?:
+    | {
+        /**
+         * Só dígitos. Ex.: 35912345678
+         */
+        numero: string;
+        tipo?: ('fixo' | 'celular') | null;
+        /**
+         * Desmarcado = número inválido/errado; sai da fila de ligação.
+         */
+        valido?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Bloqueia o contato e retira das filas e listas de trabalho.
+   */
+  naoContatar?: boolean | null;
+  naoContatarEm?: string | null;
+  naoContatarPor?: (number | null) | User;
   origem?: ('boa_vista' | 'instagram' | 'indicacao' | 'base_wsoft' | 'site' | 'outra') | null;
   /**
    * Ex.: Boa Vista
@@ -419,7 +518,6 @@ export interface CrmEmpresa {
   fornecedorDado?: string | null;
   lote?: (number | null) | CrmLotesImportacao;
   dataImportacao?: string | null;
-  baseLegal?: ('legitimo_interesse' | 'consentimento' | 'outra') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -456,50 +554,6 @@ export interface CrmLotesImportacao {
     | null;
   registradoPor?: (number | null) | User;
   registradoPorNome?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "crm-contatos".
- */
-export interface CrmContato {
-  id: number;
-  empresa: number | CrmEmpresa;
-  nome?: string | null;
-  email?: string | null;
-  papel?: ('decisor' | 'influenciador' | 'operacional' | 'indefinido') | null;
-  /**
-   * Nome do contato igual à razão social.
-   */
-  empresarioIndividual?: boolean | null;
-  telefones?:
-    | {
-        /**
-         * Só dígitos. Ex.: 35912345678
-         */
-        numero: string;
-        tipo?: ('fixo' | 'celular') | null;
-        /**
-         * Desmarcado = número inválido/errado; sai da fila de ligação.
-         */
-        valido?: boolean | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Bloqueia o contato e retira das filas e listas de trabalho.
-   */
-  naoContatar?: boolean | null;
-  naoContatarEm?: string | null;
-  naoContatarPor?: (number | null) | User;
-  origem?: ('boa_vista' | 'instagram' | 'indicacao' | 'base_wsoft' | 'site' | 'outra') | null;
-  /**
-   * Ex.: Boa Vista
-   */
-  fornecedorDado?: string | null;
-  lote?: (number | null) | CrmLotesImportacao;
-  dataImportacao?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -611,6 +665,58 @@ export interface CrmMovimentacoe {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-solicitacoes-titular".
+ */
+export interface CrmSolicitacoesTitular {
+  id: number;
+  /**
+   * Gerado sozinho se ficar em branco.
+   */
+  protocolo: string;
+  tipo: 'exportacao' | 'exclusao' | 'correcao' | 'outro';
+  status?: ('aberta' | 'concluida' | 'recusada') | null;
+  recebidaEm: string;
+  canal?: string | null;
+  concluidaEm?: string | null;
+  /**
+   * Após a exclusão definitiva este vínculo fica vazio.
+   */
+  empresa?: (number | null) | CrmEmpresa;
+  observacao?: string | null;
+  registradoPor?: (number | null) | User;
+  registradoPorNome?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-dias".
+ */
+export interface CrmDia {
+  id: number;
+  usuario: number | User;
+  dia: string;
+  meta: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-dia-itens".
+ */
+export interface CrmDiaIten {
+  id: number;
+  usuario: number | User;
+  dia: string;
+  empresa: number | CrmEmpresa;
+  origem?: ('sorteio' | 'manual') | null;
+  feito?: boolean | null;
+  feitoEm?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "crm-modelos-importacao".
  */
 export interface CrmModelosImportacao {
@@ -625,28 +731,6 @@ export interface CrmModelosImportacao {
     | number
     | boolean
     | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "crm-solicitacoes-titular".
- */
-export interface CrmSolicitacoesTitular {
-  id: number;
-  protocolo: string;
-  tipo: 'exportacao' | 'exclusao' | 'correcao' | 'outro';
-  status?: ('aberta' | 'concluida' | 'recusada') | null;
-  recebidaEm: string;
-  canal?: string | null;
-  concluidaEm?: string | null;
-  /**
-   * Após a exclusão definitiva este vínculo fica vazio.
-   */
-  empresa?: (number | null) | CrmEmpresa;
-  observacao?: string | null;
-  registradoPor?: (number | null) | User;
-  registradoPorNome?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -877,6 +961,14 @@ export interface PayloadLockedDocument {
         value: number | CrmMovimentacoe;
       } | null)
     | ({
+        relationTo: 'crm-dias';
+        value: number | CrmDia;
+      } | null)
+    | ({
+        relationTo: 'crm-dia-itens';
+        value: number | CrmDiaIten;
+      } | null)
+    | ({
         relationTo: 'crm-lotes-importacao';
         value: number | CrmLotesImportacao;
       } | null)
@@ -1057,20 +1149,19 @@ export interface FornecedoresSelect<T extends boolean = true> {
  * via the `definition` "crm-empresas_select".
  */
 export interface CrmEmpresasSelect<T extends boolean = true> {
+  pessoas?: T;
   razaoSocial?: T;
   nomeFantasia?: T;
   cnpj?: T;
-  raizCnpj?: T;
-  tipo?: T;
   situacaoCadastral?: T;
   faixaFundacao?: T;
-  logradouro?: T;
-  numero?: T;
-  complemento?: T;
-  bairro?: T;
   cidade?: T;
   uf?: T;
   cep?: T;
+  bairro?: T;
+  logradouro?: T;
+  numero?: T;
+  complemento?: T;
   telefones?:
     | T
     | {
@@ -1088,26 +1179,34 @@ export interface CrmEmpresasSelect<T extends boolean = true> {
         id?: T;
       };
   observacoes?: T;
-  status?: T;
-  retornarEm?: T;
-  motivoDescarte?: T;
+  tentativas?: T;
+  qualificacoesDaEmpresa?: T;
+  desfechosDaEmpresa?: T;
+  historicoStatus?: T;
+  solicitacoesTitular?: T;
+  raizCnpj?: T;
+  tipo?: T;
+  ordemImportacao?: T;
   prioridade?: T;
   prioridadeCalculada?: T;
   prioridadeManual?: T;
+  canais?: T;
+  semCanalContato?: T;
+  baseLegal?: T;
+  alertas?: T;
+  origem?: T;
+  fornecedorDado?: T;
+  lote?: T;
+  dataImportacao?: T;
+  status?: T;
+  motivoDescarte?: T;
   vendedor?: T;
+  retornarEm?: T;
   apresentador?: T;
   apresentacaoData?: T;
   naoContatar?: T;
   naoContatarEm?: T;
   naoContatarPor?: T;
-  semCanalContato?: T;
-  alertas?: T;
-  ordemImportacao?: T;
-  origem?: T;
-  fornecedorDado?: T;
-  lote?: T;
-  dataImportacao?: T;
-  baseLegal?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1207,6 +1306,31 @@ export interface CrmMovimentacoesSelect<T extends boolean = true> {
   motivo?: T;
   usuario?: T;
   usuarioNome?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-dias_select".
+ */
+export interface CrmDiasSelect<T extends boolean = true> {
+  usuario?: T;
+  dia?: T;
+  meta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-dia-itens_select".
+ */
+export interface CrmDiaItensSelect<T extends boolean = true> {
+  usuario?: T;
+  dia?: T;
+  empresa?: T;
+  origem?: T;
+  feito?: T;
+  feitoEm?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1512,6 +1636,10 @@ export interface CrmConfiguracao {
    * Sem nenhuma conversa, o lead só pode ser descartado (empresa inativa, número inexistente, sem canal) depois deste número de tentativas registradas.
    */
   tentativasParaDescarte: number;
+  /**
+   * Ligado: o sorteio do Meu dia usa os leads do vendedor e os que ainda não têm vendedor (estes passam a ser de quem sorteou). Desligado: só os leads já atribuídos ao vendedor.
+   */
+  meuDiaLeadsSemVendedor?: boolean | null;
   baseLegalPadrao?: ('legitimo_interesse' | 'consentimento' | 'outra') | null;
   encarregadoNome?: string | null;
   /**
@@ -1591,6 +1719,7 @@ export interface CrmConfiguracaoSelect<T extends boolean = true> {
         id?: T;
       };
   tentativasParaDescarte?: T;
+  meuDiaLeadsSemVendedor?: T;
   baseLegalPadrao?: T;
   encarregadoNome?: T;
   canalTitular?: T;

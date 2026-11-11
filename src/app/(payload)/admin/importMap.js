@@ -1,5 +1,11 @@
 import { default as default_e6b5dda813560284baa69c2f6a5163c4 } from '@/components/admin/MoedaCell'
 import { default as default_e09944ab4c1fdf2385d62bde5c90c234 } from '@/components/admin/crm/PainelContato'
+import { default as default_ee7251ba99781b151de3ce86166cc183 } from '@/components/admin/crm/celulas/MeuDiaCell'
+import { default as default_21bcefebf9f740a304b721c6eb9a7b13 } from '@/components/admin/crm/celulas/EmpresaCell'
+import { default as default_1ec9b7c966f634545428cc16caf3cddb } from '@/components/admin/crm/celulas/CanaisCell'
+import { default as default_d01c27c7406dd144babfbc143fd29101 } from '@/components/admin/crm/celulas/StatusCell'
+import { default as default_f72ae6ac9653a121de6c1bc48f5fd9d4 } from '@/components/admin/crm/celulas/PessoaCell'
+import { default as default_e7bb866ab8e3e39cfe554c1ed9d4c348 } from '@/components/admin/crm/AvisoNasceDaEmpresa'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -20,12 +26,19 @@ import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc056
 import { default as default_49cbc28aa7a0151d1cc8c8a6e1c7c3ee } from '@/components/admin/OrcamentoView'
 import { default as default_c924778ada268123edd1f08d8e01ad73 } from '@/components/admin/LancamentosView'
 import { default as default_5602a998aa9eb7b69c0fb86566d882c9 } from '@/components/admin/CrmView'
+import { default as default_443d1a6822950468cb2bd5e558c6277d } from '@/components/admin/MeuDiaView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@/components/admin/MoedaCell#default": default_e6b5dda813560284baa69c2f6a5163c4,
   "@/components/admin/crm/PainelContato#default": default_e09944ab4c1fdf2385d62bde5c90c234,
+  "@/components/admin/crm/celulas/MeuDiaCell#default": default_ee7251ba99781b151de3ce86166cc183,
+  "@/components/admin/crm/celulas/EmpresaCell#default": default_21bcefebf9f740a304b721c6eb9a7b13,
+  "@/components/admin/crm/celulas/CanaisCell#default": default_1ec9b7c966f634545428cc16caf3cddb,
+  "@/components/admin/crm/celulas/StatusCell#default": default_d01c27c7406dd144babfbc143fd29101,
+  "@/components/admin/crm/celulas/PessoaCell#default": default_f72ae6ac9653a121de6c1bc48f5fd9d4,
+  "@/components/admin/crm/AvisoNasceDaEmpresa#default": default_e7bb866ab8e3e39cfe554c1ed9d4c348,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -46,5 +59,6 @@ export const importMap = {
   "@/components/admin/OrcamentoView#default": default_49cbc28aa7a0151d1cc8c8a6e1c7c3ee,
   "@/components/admin/LancamentosView#default": default_c924778ada268123edd1f08d8e01ad73,
   "@/components/admin/CrmView#default": default_5602a998aa9eb7b69c0fb86566d882c9,
+  "@/components/admin/MeuDiaView#default": default_443d1a6822950468cb2bd5e558c6277d,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

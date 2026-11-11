@@ -1,5 +1,8 @@
 import type { CollectionAfterChangeHook, PayloadRequest } from 'payload'
 
+import { diaDe } from '../../crm/meuDia'
+import { marcarFeitoNoDia } from './meuDiaEndpoints'
+
 type Telefone = { id?: string | null; numero: string; tipo?: string | null; valido?: boolean | null }
 
 const idDe = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number | null | undefined))
@@ -82,8 +85,61 @@ export const aplicarEfeitosDoContato: CollectionAfterChangeHook = async ({ doc, 
   }
 
   if (Object.keys(dados).length) {
-    await payload.update({ collection: 'crm-empresas', id: empresaId, data: dados as never, req, overrideAccess: true })
-    if (dados.status) await registrarMovimentacao(req, empresaId, empresa.status, dados.status as string, 'Primeiro contato registrado')
+    await payload.update({
+      collection: 'crm-empresas',
+      id: empresaId,
+      data: dados as never,
+      req,
+      overrideAccess: true,
+      context: { motivoMovimentacao: 'Primeiro contato registrado' },
+    })
   }
+
+  // Meu dia: a empresa conta como feita no dia de quem registrou
+  const quem = idDe(doc.registradoPor)
+  if (quem) await marcarFeitoNoDia(req, quem, empresaId, diaDe(doc.dataHora ?? new Date()))
+  return doc
+}
+
+// Qualificação registrada na ficha → status do lead acompanha o resultado
+export const aplicarEfeitosDaQualificacao: CollectionAfterChangeHook = async ({ doc, operation, req }) => {
+  if (operation !== 'create') return doc
+  const empresaId = idDe(doc.empresa)
+  if (!empresaId) return doc
+  const dados: Record<string, unknown> = { status: doc.resultado }
+  if (doc.resultado === 'retornar_depois' && doc.retornarEm) dados.retornarEm = doc.retornarEm
+  if (doc.resultado === 'descartado' && doc.motivoDescarte) dados.motivoDescarte = doc.motivoDescarte
+  await req.payload.update({
+    collection: 'crm-empresas',
+    id: empresaId,
+    data: dados as never,
+    req,
+    overrideAccess: true,
+    context: { motivoMovimentacao: 'Qualificação registrada' },
+  })
+  return doc
+}
+
+// Desfecho da venda registrado na ficha → status "Venda realizada" / "Venda não realizada"
+export const aplicarEfeitosDoDesfecho: CollectionAfterChangeHook = async ({ doc, operation, req }) => {
+  if (operation !== 'create') return doc
+  const empresaId = idDe(doc.empresa)
+  if (!empresaId) return doc
+  await req.payload.update({
+    collection: 'crm-empresas',
+    id: empresaId,
+    data: { status: doc.resultado } as never,
+    req,
+    overrideAccess: true,
+    context: { motivoMovimentacao: 'Desfecho da venda registrado' },
+  })
+  return doc
+}
+
+// Toda mudança de status da empresa (na ficha ou pelo sistema) vai para o Histórico de status
+export const registrarMudancaDeStatus: CollectionAfterChangeHook = async ({ context, doc, operation, previousDoc, req }) => {
+  if (operation !== 'update' || !previousDoc || previousDoc.status === doc.status) return doc
+  const motivo = typeof context?.motivoMovimentacao === 'string' ? context.motivoMovimentacao : 'Alterado na ficha da empresa'
+  await registrarMovimentacao(req, doc.id, previousDoc.status, doc.status, motivo)
   return doc
 }
