@@ -171,6 +171,16 @@ describe.skipIf(!local)('CRM — Meu dia e ficha da empresa (Payload + banco des
     expect(mov.docs.map((m) => [m.de, m.para, m.motivo])).toEqual([['na_fila', 'em_contato', 'Primeiro contato registrado']])
   })
 
+  it('"Enviado, aguardando retorno" (WhatsApp/e-mail): não conta como conversa e leva a Em contato', async () => {
+    const r = await payload.create({
+      collection: 'crm-registros-contato',
+      data: { empresa: emp.baixaLivre, canal: 'email', resultado: 'aguardando_retorno', dataHora: new Date().toISOString() } as never,
+      ...como(u.vend1),
+    })
+    expect(r.houveConversa).toBe(false)
+    expect((await empresa(emp.baixaLivre)).status).toBe('em_contato')
+  })
+
   it('qualificação e desfecho atualizam o status da empresa', async () => {
     await payload.create({
       collection: 'crm-qualificacoes',

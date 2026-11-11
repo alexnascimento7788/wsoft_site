@@ -213,8 +213,14 @@ export default function PainelContato() {
     .filter((c) => c.tipo === 'email' || c.celular)
     .map((c) => ({ tipo: c.tipo === 'email' ? 'email' : 'whatsapp', valor: c.valor, pessoa: c.rotulo === 'Empresa' ? '' : c.rotulo, contatoId: c.contatoId }))
 
-  const abrirTentativa = (canal: string, canalInfo?: { valor: string; contatoId?: number }) => {
-    setForm({ ...vazio, canal, telefoneUsado: canalInfo?.valor ?? '', contato: canalInfo?.contatoId ? String(canalInfo.contatoId) : '' })
+  const abrirTentativa = (canal: string, canalInfo?: { valor: string; contatoId?: number }, resultado = '') => {
+    setForm({
+      ...vazio,
+      canal,
+      resultado,
+      telefoneUsado: canalInfo?.valor ?? '',
+      contato: canalInfo?.contatoId ? String(canalInfo.contatoId) : '',
+    })
     setAcao('tentativa')
   }
 
@@ -401,7 +407,7 @@ export default function PainelContato() {
                 type="button"
                 className="crm-btn crm-btn--registrar"
                 onClick={() => {
-                  abrirTentativa(envio.canal, envio.destino)
+                  abrirTentativa(envio.canal, envio.destino, 'aguardando_retorno')
                   setEnvio(null)
                 }}
               >

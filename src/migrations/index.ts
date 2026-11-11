@@ -5,6 +5,7 @@ import * as migration_20261108_151454_perfis from './20261108_151454_perfis';
 import * as migration_20261108_151500_bloquear_api_rest from './20261108_151500_bloquear_api_rest';
 import * as migration_20261108_162624_crm from './20261108_162624_crm';
 import * as migration_20261111_204039_crm_meu_dia from './20261111_204039_crm_meu_dia';
+import * as migration_20261111_211329_crm_aguardando_retorno from './20261111_211329_crm_aguardando_retorno';
 
 export const migrations = [
   {
@@ -40,6 +41,11 @@ export const migrations = [
   {
     up: migration_20261111_204039_crm_meu_dia.up,
     down: migration_20261111_204039_crm_meu_dia.down,
-    name: '20261111_204039_crm_meu_dia'
+    name: '20261111_204039_crm_meu_dia',
+  },
+  {
+    up: migration_20261111_211329_crm_aguardando_retorno.up,
+    down: migration_20261111_211329_crm_aguardando_retorno.down,
+    name: '20261111_211329_crm_aguardando_retorno'
   },
 ];

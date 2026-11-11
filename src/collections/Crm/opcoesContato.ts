@@ -8,6 +8,7 @@ export const CANAIS_CONTATO = [
 ]
 
 export const RESULTADOS_CONTATO = [
+  { label: 'Enviado, aguardando retorno', value: 'aguardando_retorno' },
   { label: 'Não atendeu', value: 'nao_atendeu' },
   { label: 'Número inválido ou errado', value: 'numero_invalido' },
   { label: 'Atendeu, mas não é a pessoa certa', value: 'pessoa_errada' },

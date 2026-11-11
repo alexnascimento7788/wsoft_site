@@ -569,6 +569,7 @@ export interface CrmRegistrosContato {
   canal: 'ligacao' | 'whatsapp' | 'email' | 'outro';
   telefoneUsado?: string | null;
   resultado:
+    | 'aguardando_retorno'
     | 'nao_atendeu'
     | 'numero_invalido'
     | 'pessoa_errada'
