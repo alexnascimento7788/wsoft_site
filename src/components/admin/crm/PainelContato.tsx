@@ -26,6 +26,15 @@ import { MeuDiaBotao } from './celulas/MeuDiaBotao'
 import { Status } from './celulas/StatusCell'
 import { FormDesfecho, FormQualificacao, FormTitular } from './Formularios'
 import { Mensagens, type Destino } from './mensagens/Mensagens'
+import {
+  abordagemSugerida,
+  assuntoEmail,
+  linkWhatsApp,
+  numeroInternacional,
+  ramoDaEmpresa,
+  textoFormulario,
+  textoWhatsApp,
+} from './mensagens/modelos'
 
 import './PainelContato.css'
 import './celulas/celulas.css'
@@ -286,6 +295,39 @@ export default function PainelContato() {
     .filter((c) => c.tipo === 'email' || c.whatsapp)
     .map((c) => ({ tipo: c.tipo === 'email' ? 'email' : 'whatsapp', valor: c.valor, pessoa: c.rotulo === 'Empresa' ? '' : c.rotulo, contatoId: c.contatoId }))
 
+  // Botões WhatsApp / E-mail da lista de canais: abrem o app já com a mensagem da abordagem sugerida
+  // (a assinatura vem do painel Mensagem pronta, lembrada neste navegador) e oferecem registrar o envio
+  const dadosRapidos = (c: Canal) => {
+    let assinatura: { rem?: string; cargo?: string } | null = null
+    try {
+      assinatura = JSON.parse(localStorage.getItem('crm-assinatura') ?? 'null')
+    } catch {
+      /* sem armazenamento */
+    }
+    return {
+      nome: c.rotulo === 'Empresa' ? '' : c.rotulo,
+      empresa: empresa.nomeFantasia || empresa.razaoSocial,
+      cidade: empresa.cidade ?? '',
+      uf: empresa.uf ?? '',
+      remetente: assinatura?.rem || (user as { name?: string | null } | null)?.name?.split(' ')[0] || '',
+      cargo: assinatura?.cargo || 'Comercial Wsoft',
+      ramo: ramoDaEmpresa(empresa.cnaes).texto,
+    }
+  }
+  const sugeridaRapida = () => abordagemSugerida([empresa.razaoSocial, empresa.nomeFantasia ?? ''], empresa.cnaes)
+  const linkRapido = (c: Canal) => {
+    const d = dadosRapidos(c)
+    const a = sugeridaRapida()
+    if (c.tipo === 'email')
+      return `mailto:${c.valor}?subject=${encodeURIComponent(assuntoEmail(a, d))}&body=${encodeURIComponent(textoFormulario(a, d))}`
+    return linkWhatsApp(numeroInternacional(c.valor), textoWhatsApp(a, d))
+  }
+  const enviouRapido = (c: Canal) => {
+    const canal = c.tipo === 'email' ? 'email' : 'whatsapp'
+    setEnvio((e) => ({ ...e, [canal]: { tipo: canal, valor: c.valor, pessoa: c.rotulo === 'Empresa' ? '' : c.rotulo, contatoId: c.contatoId } }))
+    setAcao('mensagem')
+  }
+
   const abrirTentativa = (escolhidos: CanalEscolhido[], resultado = '') => {
     const pessoa = escolhidos.find((e) => e.contatoId)?.contatoId
     setForm({
@@ -460,20 +502,28 @@ export default function PainelContato() {
                           <Phone size={13} /> Ligar
                         </a>
                         {c.whatsapp && (
-                          <button
-                            type="button"
-                            onClick={() => setAcao('mensagem')}
+                          <a
+                            href={linkRapido(c)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => enviouRapido(c)}
                             className="crm-btn crm-btn--whats"
+                            title="Abre o WhatsApp com a mensagem pronta"
                           >
                             <MessageCircle size={13} /> WhatsApp
-                          </button>
+                          </a>
                         )}
                       </>
                     )}
                     {c.tipo === 'email' && (
-                      <button type="button" onClick={() => setAcao('mensagem')} className="crm-btn crm-btn--email">
+                      <a
+                        href={linkRapido(c)}
+                        onClick={() => enviouRapido(c)}
+                        className="crm-btn crm-btn--email"
+                        title="Abre o seu programa de e-mail com a mensagem pronta"
+                      >
                         <Mail size={13} /> E-mail
-                      </button>
+                      </a>
                     )}
                   </span>
                 </li>
