@@ -59,19 +59,18 @@ export function Lancamentos({
   const i = mes - 1
   const nomeMes = MESES[i].nome
 
-  const valor = (l: LinhaLancamento, campo: Campo): string =>
-    edicoes[l.id]?.[campo] ?? paraTexto(l[campo][i])
+  const valorEm = (ed: Edicoes, l: LinhaLancamento, campo: Campo): string =>
+    ed[l.id]?.[campo] ?? paraTexto(l[campo][i])
+  const valor = (l: LinhaLancamento, campo: Campo) => valorEm(edicoes, l, campo)
 
-  const alteradas = useMemo(
-    () =>
-      linhas.filter((l) =>
-        (['previsto', 'realizado'] as Campo[]).some((c) => {
-          const e = edicoes[l.id]?.[c]
-          return e !== undefined && paraNumero(e) !== l[c][i]
-        }),
-      ),
-    [edicoes, linhas, i],
-  )
+  const alteradasEm = (ed: Edicoes) =>
+    linhas.filter((l) =>
+      (['previsto', 'realizado'] as Campo[]).some((c) => {
+        const e = ed[l.id]?.[c]
+        return e !== undefined && paraNumero(e) !== l[c][i]
+      }),
+    )
+  const alteradas = useMemo(() => alteradasEm(edicoes), [edicoes, linhas, i]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const total = (campo: Campo | 'orcado') =>
     linhas.reduce((s, l) => {
@@ -90,17 +89,29 @@ export function Lancamentos({
   }
 
   // Realizado vazio recebe a previsão (ou o orçado, sem previsão) — atalho para fechar o mês
-  const preencherRealizado = () => {
-    const novas: Edicoes = { ...edicoes }
+  const comRealizadoPreenchido = (ed: Edicoes): Edicoes => {
+    const novas: Edicoes = { ...ed }
     for (const l of linhas) {
-      if (paraNumero(valor(l, 'realizado')) !== null) continue
-      const base = paraNumero(valor(l, 'previsto')) ?? l.orcado[i]
+      if (paraNumero(valorEm(ed, l, 'realizado')) !== null) continue
+      const base = paraNumero(valorEm(ed, l, 'previsto')) ?? l.orcado[i]
       if (base) novas[l.id] = { ...novas[l.id], realizado: paraTexto(base) }
     }
-    setEdicoes(novas)
+    return novas
   }
+  const preencherRealizado = () => setEdicoes(comRealizadoPreenchido(edicoes))
 
-  const salvar = async () => {
+  // Despesas com previsão (ou orçado) no mês e sem realizado lançado
+  const semRealizado = (ed: Edicoes) =>
+    linhas.filter(
+      (l) =>
+        paraNumero(valorEm(ed, l, 'realizado')) === null &&
+        (paraNumero(valorEm(ed, l, 'previsto')) || l.orcado[i]),
+    )
+
+  const salvar = async (ed: Edicoes = edicoes) => {
+    const alteradas = alteradasEm(ed)
+    const valor = (l: LinhaLancamento, c: Campo) => valorEm(ed, l, c)
+    const edicoes = ed
     const invalidas = alteradas.filter((l) =>
       (['previsto', 'realizado'] as Campo[]).some((c) => Number.isNaN(paraNumero(valor(l, c)))),
     )
@@ -139,13 +150,28 @@ export function Lancamentos({
   }
 
   const efetivar = async () => {
-    if (
+    let ed = edicoes
+    const faltando = semRealizado(ed)
+    if (faltando.length) {
+      const nomes = faltando.slice(0, 5).map((l) => `• ${l.descricao}`).join('\n')
+      const mais = faltando.length > 5 ? `\n… e mais ${faltando.length - 5}` : ''
+      if (
+        !window.confirm(
+          `${faltando.length} despesa(s) estão SEM REALIZADO em ${nomeMes.toLowerCase()}:\n${nomes}${mais}\n\n` +
+            `Depois de efetivado, o painel só mostra o realizado — esse valor ficaria zerado no gráfico.\n\n` +
+            `OK = usar a previsão como realizado e efetivar\nCancelar = voltar e lançar o realizado`,
+        )
+      )
+        return
+      ed = comRealizadoPreenchido(ed)
+      setEdicoes(ed)
+    } else if (
       !window.confirm(
         `Efetivar ${nomeMes}/${ano}? O realizado até ${nomeMes.toLowerCase()} passa a ser considerado completo e o painel usa a previsão só dos meses seguintes.`,
       )
     )
       return
-    if (alteradas.length && !(await salvar())) return
+    if (alteradasEm(ed).length && !(await salvar(ed))) return
     const r = await fetch(`${apiRoute}/globals/configuracao-orcamento`, {
       method: 'POST',
       credentials: 'include',
@@ -159,6 +185,31 @@ export function Lancamentos({
     toast.success(`${nomeMes} efetivado.`)
     const proximo = Math.min(mes + 1, 12)
     setMes(proximo)
+    router.refresh()
+  }
+
+  // Reabrir um mês efetivado: o último fechado passa a ser o anterior (reabre este e os seguintes)
+  const reabrir = async () => {
+    const seguintes = mesFechado !== null && mesFechado > mes ? ` e os meses seguintes até ${MESES[mesFechado - 1].nome.toLowerCase()}` : ''
+    if (
+      !window.confirm(
+        `Reabrir ${nomeMes}/${ano}${seguintes}? O painel volta a usar a previsão a partir de ${nomeMes.toLowerCase()} até você efetivar de novo. Nenhum valor lançado é apagado.`,
+      )
+    )
+      return
+    setSalvando(true)
+    const r = await fetch(`${apiRoute}/globals/configuracao-orcamento`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ anoVigente: ano, mesFechado: mes > 1 ? String(mes - 1) : null }),
+    })
+    setSalvando(false)
+    if (!r.ok) {
+      toast.error('Não foi possível reabrir o mês.')
+      return
+    }
+    toast.success(`${nomeMes} reaberto.`)
     router.refresh()
   }
 
@@ -222,17 +273,30 @@ export function Lancamentos({
             <button
               type="button"
               className="lanc__btn lanc__btn--primario"
-              onClick={salvar}
+              onClick={() => salvar()}
               disabled={salvando || alteradas.length === 0}
             >
               {salvando ? 'Salvando…' : `Salvar${alteradas.length ? ` (${alteradas.length})` : ''}`}
             </button>
-            <button type="button" className="lanc__btn lanc__btn--efetivar" onClick={efetivar} disabled={salvando}>
-              Efetivar {nomeMes.toLowerCase()}
-            </button>
+            {fechado ? (
+              <button type="button" className="lanc__btn lanc__btn--reabrir" onClick={reabrir} disabled={salvando}>
+                Reabrir {nomeMes.toLowerCase()}
+              </button>
+            ) : (
+              <button type="button" className="lanc__btn lanc__btn--efetivar" onClick={efetivar} disabled={salvando}>
+                Efetivar {nomeMes.toLowerCase()}
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      {fechado && semRealizado(edicoes).length > 0 && (
+        <p className="lanc__alerta" role="alert">
+          {nomeMes} está efetivado, mas {semRealizado(edicoes).length} despesa(s) estão sem realizado — no painel elas
+          aparecem zeradas. Lance o realizado e salve (ou use “Preencher realizado vazio com a previsão”).
+        </p>
+      )}
 
       {linhas.length === 0 ? (
         <p className="orc-sub">

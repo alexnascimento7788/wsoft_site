@@ -172,3 +172,17 @@
 .lanc__dica {
   margin-top: 10px;
 }
+
+.lanc__btn--reabrir {
+  border-color: var(--orc-linha);
+  color: var(--orc-linha);
+}
+
+.lanc__alerta {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #f4791f55;
+  background: #f4791f14;
+  font-size: 12px;
+}
