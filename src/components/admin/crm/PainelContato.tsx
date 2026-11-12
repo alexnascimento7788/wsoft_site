@@ -25,7 +25,7 @@ import { formatarTelefone } from '@/crm/visual'
 import { MeuDiaBotao } from './celulas/MeuDiaBotao'
 import { Status } from './celulas/StatusCell'
 import { FormDesfecho, FormQualificacao, FormTitular } from './Formularios'
-import { Mensagens, type Destino } from './mensagens/Mensagens'
+import { Mensagens, copiarParaWhatsApp, type Destino } from './mensagens/Mensagens'
 import {
   abordagemSugerida,
   assuntoEmail,
@@ -324,6 +324,7 @@ export default function PainelContato() {
   }
   const enviouRapido = (c: Canal) => {
     const canal = c.tipo === 'email' ? 'email' : 'whatsapp'
+    if (canal === 'whatsapp') copiarParaWhatsApp(textoWhatsApp(sugeridaRapida(), dadosRapidos(c)))
     setEnvio((e) => ({ ...e, [canal]: { tipo: canal, valor: c.valor, pessoa: c.rotulo === 'Empresa' ? '' : c.rotulo, contatoId: c.contatoId } }))
     setAcao('mensagem')
   }

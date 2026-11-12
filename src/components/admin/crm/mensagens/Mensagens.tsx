@@ -52,6 +52,19 @@ function copiarTexto(texto: string, msg: string) {
     .catch(() => toast.error('Não foi possível copiar. Selecione o texto e use Ctrl+C.'))
 }
 
+// O WhatsApp do computador (app do Windows/Mac) às vezes estraga os emojis que chegam pelo link.
+// Por isso a mensagem também vai para a área de transferência: se vier quebrada, é só apagar e colar.
+export function copiarParaWhatsApp(texto: string) {
+  navigator.clipboard
+    .writeText(texto)
+    .then(() =>
+      toast.success('Mensagem também copiada. Se os emojis aparecerem estranhos no WhatsApp, apague o texto e cole (Ctrl+V).', {
+        duration: 9000,
+      }),
+    )
+    .catch(() => undefined)
+}
+
 // Mensagem pronta (Prospecção SiagWeb): dados da empresa já preenchidos, escolha da abordagem,
 // prévia do e-mail e do WhatsApp, e botões de copiar / abrir.
 export function Mensagens({ empresa, nomes, cnaes, cidade, uf, remetentePadrao, destinos, aoEnviar }: Props) {
@@ -322,7 +335,10 @@ export function Mensagens({ empresa, nomes, cnaes, cidade, uf, remetentePadrao, 
                 href={numero ? linkWhatsApp(numero, texto) : `https://wa.me/?text=${encodeURIComponent(texto)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => aoEnviar('whatsapp', destino)}
+                onClick={() => {
+                  copiarParaWhatsApp(texto)
+                  aoEnviar('whatsapp', destino)
+                }}
               >
                 <ExternalLink size={13} /> Abrir no WhatsApp
               </a>
