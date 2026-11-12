@@ -1,33 +1,46 @@
 'use client'
 
 import { toast } from '@payloadcms/ui'
-import { Copy, ExternalLink, Mail, MessageCircle } from 'lucide-react'
+import { ClipboardList, Copy, ExternalLink, Mail, MessageCircle, Phone } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import { formatarTelefone } from '@/crm/visual'
 import {
   ABORDAGENS,
+  abordagemSugerida,
   assuntoEmail,
+  assuntoFormulario,
   htmlBalao,
   htmlEmail,
   linkWhatsApp,
   numeroInternacional,
+  ramoDaEmpresa,
+  roteiroLigacao,
+  textoFormulario,
+  textoRoteiro,
   textoWhatsApp,
   type Abordagem,
+  type Cnae,
 } from './modelos'
 
 import './Mensagens.css'
 
 export type Destino = { tipo: 'whatsapp' | 'email'; valor: string; pessoa: string; contatoId?: number }
 
+type Aba = 'whatsapp' | 'email' | 'formulario' | 'ligacao'
+
 type Props = {
   empresa: string
+  // Razão social e nome fantasia: se nenhum fala de grãos e o CNAE fala, sugere a abordagem "Pelo ramo"
+  nomes: string[]
+  cnaes: Cnae[]
   cidade: string
   uf: string
   remetentePadrao: string
   destinos: Destino[]
   // Depois de copiar / abrir: oferece registrar a tentativa já preenchida
-  aoEnviar: (canal: 'whatsapp' | 'email', destino?: Destino) => void
+  // (formulário do site entra como canal "Outro")
+  aoEnviar: (canal: 'whatsapp' | 'email' | 'outro', destino?: Destino) => void
 }
 
 const CHAVE_ASSINATURA = 'crm-assinatura'
@@ -41,9 +54,11 @@ function copiarTexto(texto: string, msg: string) {
 
 // Mensagem pronta (Prospecção SiagWeb): dados da empresa já preenchidos, escolha da abordagem,
 // prévia do e-mail e do WhatsApp, e botões de copiar / abrir.
-export function Mensagens({ empresa, cidade, uf, remetentePadrao, destinos, aoEnviar }: Props) {
-  const [aba, setAba] = useState<'email' | 'whatsapp'>(destinos.some((d) => d.tipo === 'whatsapp') ? 'whatsapp' : 'email')
-  const [abordagem, setAbordagem] = useState<Abordagem>('safra')
+export function Mensagens({ empresa, nomes, cnaes, cidade, uf, remetentePadrao, destinos, aoEnviar }: Props) {
+  const [aba, setAba] = useState<Aba>(destinos.some((d) => d.tipo === 'whatsapp') ? 'whatsapp' : 'email')
+  const [abordagem, setAbordagem] = useState<Abordagem>(() => abordagemSugerida(nomes, cnaes))
+  const sugerida = useMemo(() => abordagemSugerida(nomes, cnaes), [nomes, cnaes])
+  const [ramo, setRamo] = useState(() => ramoDaEmpresa(cnaes).texto)
   const whats = destinos.filter((d) => d.tipo === 'whatsapp')
   const emails = destinos.filter((d) => d.tipo === 'email')
   const [whatsEscolhido, setWhatsEscolhido] = useState(whats[0]?.valor ?? '')
@@ -77,9 +92,11 @@ export function Mensagens({ empresa, cidade, uf, remetentePadrao, destinos, aoEn
     if (destino?.pessoa) setNome(destino.pessoa)
   }, [destino?.pessoa])
 
-  const dados = { nome, empresa, cidade, uf, remetente, cargo }
+  const dados = { nome, empresa, cidade, uf, remetente, cargo, ramo }
   const assunto = assuntoEmail(abordagem, dados)
-  const html = useMemo(() => htmlEmail(abordagem, dados), [abordagem, nome, empresa, cidade, uf, remetente, cargo]) // eslint-disable-line react-hooks/exhaustive-deps
+  const html = useMemo(() => htmlEmail(abordagem, dados), [abordagem, nome, empresa, cidade, uf, remetente, cargo, ramo]) // eslint-disable-line react-hooks/exhaustive-deps
+  const formulario = textoFormulario(abordagem, dados)
+  const roteiro = roteiroLigacao(abordagem, dados)
   const texto = textoWhatsApp(abordagem, dados)
   const numero = numeroInternacional(whatsEscolhido)
 
@@ -112,7 +129,10 @@ export function Mensagens({ empresa, cidade, uf, remetentePadrao, destinos, aoEn
               aria-pressed={abordagem === a.valor}
               onClick={() => setAbordagem(a.valor)}
             >
-              <b>{a.nome}</b>
+              <b>
+                {a.nome}
+                {a.valor === sugerida && <em className="crm-msg__sugerida">sugerida</em>}
+              </b>
               <span>{a.resumo}</span>
             </button>
           ))}
@@ -122,6 +142,12 @@ export function Mensagens({ empresa, cidade, uf, remetentePadrao, destinos, aoEn
             Nome do contato
             <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Carlos" />
           </label>
+          {abordagem === 'cnae' && (
+            <label className="crm-msg__ramo">
+              Ramo de atividade (do CNAE, pode ajustar)
+              <input value={ramo} onChange={(e) => setRamo(e.target.value)} />
+            </label>
+          )}
           <label>
             Quem assina
             <input
@@ -152,9 +178,120 @@ export function Mensagens({ empresa, cidade, uf, remetentePadrao, destinos, aoEn
         <button type="button" role="tab" aria-selected={aba === 'email'} onClick={() => setAba('email')}>
           <Mail size={14} /> E-mail
         </button>
+        <button type="button" role="tab" aria-selected={aba === 'formulario'} onClick={() => setAba('formulario')}>
+          <ClipboardList size={14} /> Formulário do site
+        </button>
+        <button type="button" role="tab" aria-selected={aba === 'ligacao'} onClick={() => setAba('ligacao')}>
+          <Phone size={14} /> Roteiro de ligação
+        </button>
       </div>
 
-      {aba === 'whatsapp' ? (
+      {aba === 'formulario' && (
+        <div className="crm-msg__painel">
+          <div className="crm-msg__barra">
+            <span className="crm-msg__para">Para o “Fale conosco” do site da empresa</span>
+            <span className="crm-msg__acoes">
+              <button type="button" className="crm-btn" onClick={() => copiarTexto(assuntoFormulario(abordagem, dados), 'Assunto copiado.')}>
+                <Copy size={13} /> Copiar assunto
+              </button>
+              <button
+                type="button"
+                className="crm-btn crm-btn--registrar"
+                onClick={() => {
+                  copiarTexto(formulario, 'Texto copiado: cole no campo de mensagem do formulário.')
+                  aoEnviar('outro')
+                }}
+              >
+                <Copy size={13} /> Copiar texto
+              </button>
+            </span>
+          </div>
+          <p className="crm-msg__assunto">
+            <b>Assunto:</b> {assuntoFormulario(abordagem, dados)}
+          </p>
+          <pre className="crm-msg__texto">{formulario}</pre>
+          <p className="crm-msg__dica">
+            Texto simples, sem layout nem emoji, para colar no formulário de contato do site da empresa. {formulario.length}{' '}
+            caracteres{formulario.length > 1000 ? ' — se o formulário limitar o tamanho, corte a lista de recursos.' : '.'}
+          </p>
+        </div>
+      )}
+
+      {aba === 'ligacao' && (
+        <div className="crm-msg__painel crm-roteiro">
+          <div className="crm-msg__barra">
+            <span className="crm-msg__para">
+              <b>Objetivo:</b> {roteiro.objetivo}
+            </span>
+            <span className="crm-msg__acoes">
+              <button type="button" className="crm-btn" onClick={() => copiarTexto(textoRoteiro(roteiro), 'Roteiro copiado.')}>
+                <Copy size={13} /> Copiar roteiro
+              </button>
+            </span>
+          </div>
+          <ol className="crm-roteiro__passos">
+            <li>
+              <h5>Abertura</h5>
+              {roteiro.abertura.map((t) => (
+                <p key={t} className="crm-roteiro__fala">{t}</p>
+              ))}
+            </li>
+            <li>
+              <h5>Motivo da ligação</h5>
+              {roteiro.gancho.map((t) => (
+                <p key={t} className="crm-roteiro__fala">{t}</p>
+              ))}
+            </li>
+            <li>
+              <h5>Perguntas (ouça mais do que fala)</h5>
+              <ul>
+                {roteiro.perguntas.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ul>
+              <p className="crm-roteiro__sub">Se não for quem decide:</p>
+              <ul>
+                {roteiro.seNaoForDecisor.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ul>
+            </li>
+            <li>
+              <h5>Se o cliente disser…</h5>
+              <dl className="crm-roteiro__objecoes">
+                {roteiro.objecoes.map((o) => (
+                  <div key={o.se}>
+                    <dt>{o.se}</dt>
+                    <dd>{o.diga}</dd>
+                  </div>
+                ))}
+              </dl>
+            </li>
+            <li>
+              <h5>Fechamento</h5>
+              {roteiro.fechamento.map((t) => (
+                <p key={t} className="crm-roteiro__fala">{t}</p>
+              ))}
+            </li>
+          </ol>
+          <div className="crm-roteiro__extra">
+            <div>
+              <h5>Recado (caixa postal ou secretária)</h5>
+              <p>{roteiro.recado}</p>
+            </div>
+            <div>
+              <h5>Dicas</h5>
+              <ul>
+                {roteiro.dicas.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {aba === 'whatsapp' && (
         <div className="crm-msg__painel">
           <div className="crm-msg__barra">
             <label className="crm-msg__para">
@@ -196,7 +333,9 @@ export function Mensagens({ empresa, cidade, uf, remetentePadrao, destinos, aoEn
           </div>
           <p className="crm-msg__dica">No WhatsApp, os trechos entre asteriscos aparecem em negrito. Envie do WhatsApp Business da Wsoft.</p>
         </div>
-      ) : (
+      )}
+
+      {aba === 'email' && (
         <div className="crm-msg__painel">
           <div className="crm-msg__barra">
             <label className="crm-msg__para">

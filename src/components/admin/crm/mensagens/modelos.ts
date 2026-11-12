@@ -1,12 +1,48 @@
-// Modelos de abordagem (e-mail e WhatsApp) da Prospecção SiagWeb. Funções puras, sem tela.
+// Modelos de abordagem da Prospecção SiagWeb: e-mail, WhatsApp, formulário do site e roteiro de ligação.
+// Funções puras, sem tela.
 
-export type Abordagem = 'safra' | 'reforma' | 'retorno'
+export type Abordagem = 'safra' | 'reforma' | 'retorno' | 'cnae'
 
 export const ABORDAGENS: { valor: Abordagem; nome: string; resumo: string }[] = [
   { valor: 'safra', nome: 'Safra', resumo: 'A colheita está chegando: organize antes' },
   { valor: 'reforma', nome: 'Reforma Tributária', resumo: 'Nota com CBS e IBS, nota rejeitada é carga parada' },
   { valor: 'retorno', nome: 'Retorno', resumo: 'Para quem ainda não respondeu' },
+  { valor: 'cnae', nome: 'Pelo ramo (CNAE)', resumo: 'O nome não diz, mas o CNAE indica grãos: pergunta leve' },
 ]
+
+// ---- Ramo de atividade (CNAE) em palavras simples, para a abordagem "Pelo ramo" ----
+const RAMO: Record<string, string> = {
+  '5211701': 'armazém geral',
+  '5211799': 'depósito de mercadorias para terceiros',
+  '0163600': 'atividades de pós-colheita, como secagem e limpeza de grãos',
+  '4622200': 'comércio de soja',
+  '4621400': 'comércio de café em grão',
+  '4623199': 'comércio de matérias-primas agrícolas',
+  '4623108': 'comércio de matérias-primas agrícolas',
+  '4632001': 'comércio de cereais e leguminosas',
+  '4632003': 'comércio de cereais e leguminosas',
+  '1061901': 'beneficiamento de arroz',
+  '1081301': 'beneficiamento de café',
+  '1041400': 'produção de óleos vegetais',
+  '4611700': 'representação comercial de produtos agrícolas',
+  '5212500': 'carga e descarga de mercadorias',
+}
+
+export type Cnae = { codigo?: string | null; descricao?: string | null; principal?: boolean | null }
+
+// A atividade mais ligada a grãos (primária primeiro); senão a descrição da primária
+export function ramoDaEmpresa(cnaes: Cnae[] | null | undefined): { texto: string; ligadoAGraos: boolean } {
+  const lista = [...(cnaes ?? [])].sort((a, b) => Number(Boolean(b.principal)) - Number(Boolean(a.principal)))
+  const achado = lista.find((c) => c.codigo && RAMO[c.codigo])
+  if (achado) return { texto: RAMO[achado.codigo!]!, ligadoAGraos: true }
+  const prim = lista.find((c) => c.descricao)?.descricao
+  return { texto: prim ? prim.toLowerCase() : 'atividades ligadas ao agronegócio', ligadoAGraos: false }
+}
+
+// O nome já fala de grãos / armazém? Se não fala e o CNAE fala, a abordagem sugerida é "Pelo ramo"
+const NOME_DE_GRAOS = /silo|armaz|gr[aã]o|cereal|cerea|agr[ií]col|agro|caf[eé]|soja|milho|feij|arroz|sement|cooperat|coop\b|secad|beneficia|rural|fazend/i
+export const abordagemSugerida = (nomes: string[], cnaes: Cnae[] | null | undefined): Abordagem =>
+  !nomes.some((n) => NOME_DE_GRAOS.test(n)) && ramoDaEmpresa(cnaes).ligadoAGraos ? 'cnae' : 'safra'
 
 export const WSOFT_WHATSAPP = '5535988673237'
 const TEL = '(35) 98867-3237 · (35) 98898-3237'
@@ -20,6 +56,7 @@ export type DadosMensagem = {
   uf: string
   remetente: string
   cargo: string
+  ramo: string
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
@@ -41,6 +78,7 @@ const base = (d: DadosMensagem) => {
     loc: d.cidade.trim() ? d.cidade.trim() + (uf ? `/${uf}` : '') : '',
     rem: d.remetente.trim(),
     cargo: d.cargo.trim(),
+    ramo: d.ramo.trim() || 'atividades ligadas a grãos',
   }
 }
 
@@ -92,6 +130,18 @@ const EMAIL: Record<Abordagem, (d: ReturnType<typeof base>) => Conteudo> = {
     recursos: [],
     chamada: 'Posso agendar para esta semana?',
   }),
+  cnae: (d) => ({
+    assunto: `${d.e}: vocês trabalham com grãos?`,
+    titulo: 'Uma pergunta rápida, sem compromisso.',
+    paragrafos: [
+      `Olá, ${esc(d.n)}, tudo bem?`,
+      `Sou ${esc(d.rem)}, da Wsoft, de Boa Esperança (MG). Encontrei a ${esc(d.e)} no cadastro público de empresas${d.loc ? ` de ${esc(d.loc)}` : ''}, com a atividade de <b>${esc(d.ramo)}</b>, e fiquei com uma dúvida: vocês recebem ou armazenam grãos hoje?`,
+      'Pergunto porque desenvolvemos o <b>SiagWeb</b>, sistema de gestão para quem recebe, seca e armazena grãos. Se esse for o caso de vocês, ele ajuda em coisas como:',
+    ],
+    recursos: RECURSOS,
+    extra: 'Se não for a realidade da empresa, me desculpe pelo contato: é só me avisar e não volto a escrever.',
+    chamada: 'Se fizer sentido, posso te mostrar o sistema em 20 minutos, online, no horário que for melhor para você?',
+  }),
 }
 
 export const assuntoEmail = (a: Abordagem, dados: DadosMensagem) => EMAIL[a](base(dados)).assunto
@@ -138,9 +188,144 @@ const WHATS: Record<Abordagem, (d: ReturnType<typeof base>) => string> = {
     `Olá, *${d.n}*! Tudo bem? 👋\n\nAqui é o ${d.rem}, da *Wsoft*. Com a Reforma Tributária, a nota fiscal já traz CBS e IBS, e *nota rejeitada é carga parada*.\n\nO *SiagWeb* emite a nota a partir da operação do armazém, com CBS e IBS já calculados.\n\nPreparamos um e-book gratuito sobre a Reforma para armazéns de grãos. Posso te enviar?`,
   retorno: (d) =>
     `Olá, *${d.n}*! Tudo bem?\n\nAqui é o ${d.rem}, da *Wsoft*. Passando para retomar o contato sobre o *SiagWeb*.\n\nUma demonstração online de *20 minutos* esta semana funciona para você? 📅`,
+  cnae: (d) =>
+    `Olá, *${d.n}*! Tudo bem? 👋\n\nAqui é o ${d.rem}, da *Wsoft*, de Boa Esperança (MG). Vi no cadastro da *${d.e}* a atividade de _${d.ramo}_ e fiquei com uma dúvida rápida: vocês recebem ou armazenam grãos hoje? 🌾\n\nPergunto porque fazemos o *SiagWeb*, sistema para quem recebe, seca e armazena grãos (tickets, estoque por produtor, nota fiscal e financeiro).\n\nSe não for o caso, sem problema, e obrigado pela atenção! 🙂`,
 }
 
 export const textoWhatsApp = (a: Abordagem, dados: DadosMensagem) => WHATS[a](base(dados))
 
 // Prévia do balão: *negrito* do WhatsApp vira <b>
-export const htmlBalao = (texto: string) => esc(texto).replace(/\*(.+?)\*/g, '<b>$1</b>')
+// e _itálico_ vira <i>
+export const htmlBalao = (texto: string) =>
+  esc(texto)
+    .replace(/\*(.+?)\*/g, '<b>$1</b>')
+    .replace(/(^|\s)_(.+?)_(?=\s|$|[.,!?])/g, '$1<i>$2</i>')
+
+// ---- Formulário de contato do site da empresa: texto puro (sem layout, sem emoji), curto ----
+const semHtml = (t: string) =>
+  t
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g, '$2: $1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+
+export function textoFormulario(a: Abordagem, dados: DadosMensagem) {
+  const d = base(dados)
+  const m = EMAIL[a](d)
+  const partes = [
+    ...m.paragrafos.map(semHtml),
+    ...(m.recursos.length ? [m.recursos.map((r) => `- ${r}`).join('\n')] : []),
+    ...(m.extra ? [semHtml(m.extra)] : []),
+    m.chamada,
+    [d.rem, d.cargo ? `${d.cargo}` : '', `Wsoft · ${TEL}`, SITE].filter(Boolean).join('\n'),
+  ]
+  return partes.join('\n\n')
+}
+
+export const assuntoFormulario = (a: Abordagem, dados: DadosMensagem) =>
+  a === 'cnae' ? 'Dúvida sobre a operação de grãos da empresa' : `Sistema para armazém de grãos (SiagWeb) - ${base(dados).e}`
+
+// ---- Roteiro de ligação: sugestões de fala para cada abordagem ----
+export type Roteiro = {
+  objetivo: string
+  abertura: string[]
+  gancho: string[]
+  perguntas: string[]
+  seNaoForDecisor: string[]
+  objecoes: { se: string; diga: string }[]
+  fechamento: string[]
+  recado: string
+  dicas: string[]
+}
+
+const GANCHO: Record<Abordagem, (d: ReturnType<typeof base>) => string[]> = {
+  safra: () => [
+    'Estou ligando porque a colheita está chegando e muitos armazéns da região ainda controlam entrada, umidade e descontos em planilha ou em sistemas separados.',
+    'Queria entender rapidinho como vocês fazem hoje, para ver se o nosso sistema ajuda ou não.',
+  ],
+  reforma: () => [
+    'Estou ligando por causa da Reforma Tributária: desde 2026 a nota fiscal já leva CBS e IBS, e nota rejeitada é carga parada no pátio.',
+    'Queria saber como vocês estão se preparando e, se for útil, te mandar um e-book gratuito que fizemos sobre isso para armazéns.',
+  ],
+  retorno: () => [
+    'Te mandei uma mensagem esses dias sobre o SiagWeb, o nosso sistema para silos e armazéns. Conseguiu dar uma olhada?',
+    'Sem problema se não deu tempo: em um minuto eu te conto do que se trata.',
+  ],
+  cnae: (d) => [
+    `Vi no cadastro da empresa a atividade de ${d.ramo} e fiquei com uma dúvida: vocês recebem ou armazenam grãos de produtores hoje?`,
+    'Se sim, acho que vale uma conversa rápida; se não, já te libero e obrigado pela atenção.',
+  ],
+}
+
+export function roteiroLigacao(a: Abordagem, dados: DadosMensagem): Roteiro {
+  const d = base(dados)
+  const nome = dados.nome.trim()
+  return {
+    objetivo: 'Descobrir se faz sentido e marcar uma demonstração online de 20 minutos. Não é para vender na ligação.',
+    abertura: [
+      `Bom dia${nome ? `, ${nome}` : ''}! Aqui é ${d.rem || '[seu nome]'}, da Wsoft, de Boa Esperança, Minas Gerais.`,
+      'Você tem um minutinho agora, ou prefere que eu ligue em outro horário?',
+    ],
+    gancho: GANCHO[a](d),
+    perguntas: [
+      'Vocês recebem grãos de produtores ou só de produção própria? Quais grãos?',
+      'Hoje, como é feito o controle da balança, da umidade e dos descontos?',
+      'O estoque por produtor e as notas fiscais saem do mesmo sistema, ou é tudo separado?',
+      'O que mais dá trabalho na época da safra?',
+    ],
+    seNaoForDecisor: [
+      'Quem cuida da parte de sistema ou da gestão do armazém aí na empresa?',
+      'Qual o melhor horário para falar com essa pessoa? Pode me passar o WhatsApp ou o e-mail dela?',
+    ],
+    objecoes: [
+      {
+        se: '“Já temos sistema.”',
+        diga: 'Ótimo, então vocês já sabem o valor de ter tudo controlado. O sistema de hoje já faz a nota com CBS e IBS e o estoque por produtor? Se quiser, mostro em 20 minutos como o SiagWeb faz, para vocês compararem com calma.',
+      },
+      {
+        se: '“Agora não tenho tempo.”',
+        diga: 'Entendo, a época é corrida mesmo. Qual o melhor dia e horário para eu te ligar de novo? Posso te mandar um resumo pelo WhatsApp enquanto isso?',
+      },
+      {
+        se: '“Manda por e-mail.”',
+        diga: 'Mando sim! Qual o melhor e-mail? E para não ficar perdido na caixa de entrada, posso te ligar na quinta para saber o que achou?',
+      },
+      {
+        se: '“Quanto custa?”',
+        diga: 'Depende do tamanho da operação e dos módulos que vocês usariam. Na demonstração eu entendo a realidade de vocês e já te passo um valor certo, sem compromisso.',
+      },
+      {
+        se: '“Não trabalhamos com grãos.”',
+        diga: 'Obrigado por me avisar! Vou anotar aqui para não incomodar mais. Tenha um ótimo dia.',
+      },
+    ],
+    fechamento: [
+      'Pelo que você me contou, acho que vale a pena você ver o sistema funcionando. É online e leva 20 minutos.',
+      'Fica melhor para você terça às 10h ou quinta às 15h?',
+      'Vou te mandar o convite pelo WhatsApp e pelo e-mail. Obrigado pela atenção!',
+    ],
+    recado: `Oi, aqui é ${d.rem || '[seu nome]'}, da Wsoft, de Boa Esperança (MG). Estou ligando sobre o SiagWeb, sistema para silos e armazéns de grãos. Vou mandar uma mensagem no WhatsApp; se preferir, o nosso número é ${TEL.split(' · ')[0]}. Obrigado!`,
+    dicas: [
+      'Fale devagar e com calma; sorria ao falar (dá para ouvir).',
+      'Pergunte mais do que fala: quem fala mais na ligação é o cliente.',
+      'Anote as respostas e registre a tentativa logo depois de desligar.',
+      'Se pedirem para não ligar mais, registre “Pediu para não ser contatado”.',
+    ],
+  }
+}
+
+export function textoRoteiro(r: Roteiro) {
+  const lista = (t: string[]) => t.map((x) => `- ${x}`).join('\n')
+  return [
+    `OBJETIVO: ${r.objetivo}`,
+    `1. ABERTURA\n${lista(r.abertura)}`,
+    `2. MOTIVO DA LIGAÇÃO\n${lista(r.gancho)}`,
+    `3. PERGUNTAS\n${lista(r.perguntas)}`,
+    `SE NÃO FOR QUEM DECIDE\n${lista(r.seNaoForDecisor)}`,
+    `4. SE O CLIENTE DISSER...\n${r.objecoes.map((o) => `- ${o.se} ${o.diga}`).join('\n')}`,
+    `5. FECHAMENTO\n${lista(r.fechamento)}`,
+    `RECADO (caixa postal / secretária)\n${r.recado}`,
+  ].join('\n\n')
+}

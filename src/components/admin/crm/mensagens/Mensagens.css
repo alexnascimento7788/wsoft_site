@@ -174,3 +174,128 @@ html[data-theme='dark'] .crm-msg__balao {
   font-size: 11.5px;
   color: var(--theme-elevation-500);
 }
+
+/* Abordagem sugerida pelo nome/CNAE */
+.crm-msg__sugerida {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #1f6b25;
+  background: color-mix(in srgb, #4caf50 18%, transparent);
+}
+
+.crm-msg__abas {
+  flex-wrap: wrap;
+}
+
+/* Formulário do site: texto puro */
+.crm-msg__texto {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--theme-elevation-100);
+  background: var(--theme-elevation-0);
+  color: var(--theme-elevation-800);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Roteiro de ligação */
+.crm-roteiro h5 {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--theme-elevation-900);
+}
+
+.crm-roteiro__passos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.crm-roteiro__passos > li::marker {
+  font-weight: 700;
+  color: #2f8a35;
+}
+
+.crm-roteiro__passos ul {
+  margin: 0 0 4px;
+  padding-left: 18px;
+  line-height: 1.6;
+}
+
+.crm-roteiro__fala {
+  margin: 0 0 6px;
+  padding: 8px 12px;
+  border-left: 3px solid #4caf50;
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, #4caf50 7%, var(--theme-elevation-0));
+  line-height: 1.55;
+  color: var(--theme-elevation-800);
+}
+
+.crm-roteiro__sub {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--theme-elevation-600);
+}
+
+.crm-roteiro__objecoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.crm-roteiro__objecoes > div {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--theme-elevation-100);
+  background: var(--theme-elevation-0);
+}
+
+.crm-roteiro__objecoes dt {
+  font-weight: 700;
+  color: var(--theme-elevation-900);
+}
+
+.crm-roteiro__objecoes dd {
+  margin: 3px 0 0;
+  line-height: 1.55;
+  color: var(--theme-elevation-700);
+}
+
+.crm-roteiro__extra {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.crm-roteiro__extra > div {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--theme-elevation-50);
+}
+
+.crm-roteiro__extra p,
+.crm-roteiro__extra ul {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.crm-roteiro__extra ul {
+  padding-left: 18px;
+}

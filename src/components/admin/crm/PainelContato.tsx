@@ -44,6 +44,7 @@ type Usuario = { id: number; name?: string | null; email?: string }
 type Empresa = {
   id: number
   razaoSocial: string
+  cnaes?: { codigo?: string | null; descricao?: string | null; principal?: boolean | null }[] | null
   nomeFantasia?: string | null
   cidade?: string | null
   uf?: string | null
@@ -143,7 +144,7 @@ export default function PainelContato() {
   const [salvando, setSalvando] = useState(false)
   // Mensagem copiada / aberta no WhatsApp: oferece registrar a tentativa já preenchida
   // (acumula: se mandou WhatsApp e e-mail, o registro já vem com os dois)
-  const [envio, setEnvio] = useState<Partial<Record<'whatsapp' | 'email', Destino | undefined>>>({})
+  const [envio, setEnvio] = useState<Partial<Record<'whatsapp' | 'email' | 'outro', Destino | undefined>>>({})
   const admin = isCrmAdminUser(user)
 
   const carregar = useCallback(async () => {
@@ -506,6 +507,8 @@ export default function PainelContato() {
           {acao === 'mensagem' && (
             <Mensagens
               empresa={empresa.nomeFantasia || empresa.razaoSocial}
+              nomes={[empresa.razaoSocial, empresa.nomeFantasia ?? '']}
+              cnaes={empresa.cnaes ?? []}
               cidade={empresa.cidade ?? ''}
               uf={empresa.uf ?? ''}
               remetentePadrao={(user as { name?: string | null } | null)?.name?.split(' ')[0] ?? ''}
@@ -520,14 +523,18 @@ export default function PainelContato() {
                 type="button"
                 className="crm-btn crm-btn--registrar"
                 onClick={() => {
-                  const enviados = (['whatsapp', 'email'] as const)
+                  const enviados = (['whatsapp', 'email', 'outro'] as const)
                     .filter((k) => k in envio)
                     .map((k) => ({ canal: k, valor: envio[k]?.valor, contatoId: envio[k]?.contatoId }))
                   abrirTentativa(enviados, 'aguardando_retorno')
                   setEnvio({})
                 }}
               >
-                Registrar envio por {(['whatsapp', 'email'] as const).filter((k) => k in envio).map((k) => (k === 'whatsapp' ? 'WhatsApp' : 'e-mail')).join(' e ')}
+                Registrar envio por{' '}
+                {(['whatsapp', 'email', 'outro'] as const)
+                  .filter((k) => k in envio)
+                  .map((k) => (k === 'whatsapp' ? 'WhatsApp' : k === 'email' ? 'e-mail' : 'formulário do site'))
+                  .join(' e ')}
               </button>
             </div>
           )}

@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { assuntoEmail, htmlEmail, numeroInternacional, textoWhatsApp } from '@/components/admin/crm/mensagens/modelos'
+import {
+  abordagemSugerida,
+  assuntoEmail,
+  htmlEmail,
+  numeroInternacional,
+  ramoDaEmpresa,
+  roteiroLigacao,
+  textoFormulario,
+  textoRoteiro,
+  textoWhatsApp,
+} from '@/components/admin/crm/mensagens/modelos'
 import { calcularCanais } from '@/crm/canais'
 import { diaDe, limitarQuantidade, serieIndicador, sortear } from '@/crm/meuDia'
 
@@ -67,7 +77,7 @@ describe('indicador meta x feito', () => {
 })
 
 describe('mensagem pronta (Prospecção SiagWeb)', () => {
-  const dados = { nome: 'Carlos', empresa: 'Armazéns Exemplo', cidade: 'Passos', uf: 'mg', remetente: 'Alex', cargo: 'Comercial Wsoft' }
+  const dados = { nome: 'Carlos', empresa: 'Armazéns Exemplo', cidade: 'Passos', uf: 'mg', remetente: 'Alex', cargo: 'Comercial Wsoft', ramo: '' }
 
   it('assunto, e-mail e WhatsApp usam os dados da empresa', () => {
     expect(assuntoEmail('safra', dados)).toBe('Armazéns Exemplo: a safra 2026/27 já tem sistema?')
@@ -79,6 +89,29 @@ describe('mensagem pronta (Prospecção SiagWeb)', () => {
 
   it('escapa HTML dos dados digitados', () => {
     expect(htmlEmail('safra', { ...dados, nome: '<script>' })).not.toContain('<script>')
+  })
+
+  it('abordagem pelo ramo: sugerida quando o nome não fala de grãos e o CNAE fala', () => {
+    const cnaes = [{ codigo: '4930202', principal: true }, { codigo: '5211701', principal: false }]
+    expect(abordagemSugerida(['TRANSPORTES SILVA LTDA'], cnaes)).toBe('cnae')
+    expect(abordagemSugerida(['SILVA ARMAZENS LTDA'], cnaes)).toBe('safra')
+    expect(abordagemSugerida(['TRANSPORTES SILVA LTDA'], [{ codigo: '4930202', descricao: 'Transporte', principal: true }])).toBe('safra')
+    expect(ramoDaEmpresa(cnaes).texto).toBe('armazém geral')
+    const d = { ...dados, empresa: 'Transportes Silva', ramo: 'armazém geral' }
+    expect(htmlEmail('cnae', d)).toContain('<b>armazém geral</b>')
+    expect(textoWhatsApp('cnae', d)).toContain('vocês recebem ou armazenam grãos hoje?')
+  })
+
+  it('formulário do site sai em texto puro; roteiro de ligação existe para todas as abordagens', () => {
+    for (const a of ['safra', 'reforma', 'retorno', 'cnae'] as const) {
+      const t = textoFormulario(a, dados)
+      expect(t).not.toMatch(/<[a-z]/i)
+      expect(t).toContain('Alex')
+      const r = roteiroLigacao(a, dados)
+      expect(r.abertura[0]).toContain('Carlos')
+      expect(r.gancho.length).toBeGreaterThan(0)
+      expect(textoRoteiro(r)).toContain('FECHAMENTO')
+    }
   })
 
   it('número com DDD 55 (RS) não perde o código do país', () => {
