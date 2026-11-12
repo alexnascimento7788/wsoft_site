@@ -146,7 +146,7 @@ const pessoasDaEmpresa = (req: PayloadRequest, empresa: number) =>
       where: { empresa: { equals: empresa } },
       depth: 0,
       pagination: false,
-      select: { email: true, naoContatar: true, telefones: true },
+      select: { email: true, emailInvalido: true, naoContatar: true, telefones: true },
       overrideAccess: true, // só para saber quais canais existem; nada é devolvido a quem pediu
       req,
     })

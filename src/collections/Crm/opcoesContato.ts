@@ -11,6 +11,8 @@ export const RESULTADOS_CONTATO = [
   { label: 'Enviado, aguardando retorno', value: 'aguardando_retorno' },
   { label: 'Não atendeu', value: 'nao_atendeu' },
   { label: 'Número inválido ou errado', value: 'numero_invalido' },
+  { label: 'Número não tem WhatsApp', value: 'sem_whatsapp' },
+  { label: 'E-mail não existe (voltou)', value: 'email_invalido' },
   { label: 'Atendeu, mas não é a pessoa certa', value: 'pessoa_errada' },
   { label: 'Falou com o decisor', value: 'falou_decisor' },
   { label: 'Pediu retorno', value: 'pediu_retorno' },
@@ -20,3 +22,6 @@ export const RESULTADOS_CONTATO = [
 
 // Resultados em que houve conversa (liberam a qualificação do lead)
 export const RESULTADOS_COM_CONVERSA = ['pessoa_errada', 'falou_decisor', 'pediu_retorno', 'sem_interesse', 'nao_contatar']
+
+// Resultados que apontam um canal com defeito (o sistema corrige o cadastro sozinho)
+export const RESULTADOS_CANAL_RUIM = ['numero_invalido', 'sem_whatsapp', 'email_invalido']

@@ -75,14 +75,14 @@ export const campoTelefones = (): Field => ({
           label: 'Número (DDD + número)',
           type: 'text',
           required: true,
-          admin: { width: '45%', description: 'Só dígitos. Ex.: 35912345678' },
+          admin: { width: '40%', description: 'Só dígitos. Ex.: 35912345678' },
         },
         {
           name: 'tipo',
           label: 'Tipo',
           type: 'select',
           options: TIPOS_TELEFONE,
-          admin: { width: '25%' },
+          admin: { width: '20%' },
         },
         {
           name: 'valido',
@@ -90,8 +90,18 @@ export const campoTelefones = (): Field => ({
           type: 'checkbox',
           defaultValue: true,
           admin: {
-            width: '30%',
+            width: '20%',
             description: 'Desmarcado = número inválido/errado; sai da fila de ligação.',
+          },
+        },
+        {
+          name: 'semWhatsapp',
+          label: 'Não tem WhatsApp',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            width: '20%',
+            description: 'Marcado = celular sem WhatsApp; continua para ligação, sai do WhatsApp.',
           },
         },
       ],
@@ -170,7 +180,7 @@ export const camposRegistradoPor = (): Field[] => [
     label: 'Registrado por',
     type: 'relationship',
     relationTo: 'users',
-    admin: { position: 'sidebar', readOnly: true },
+    admin: { position: 'sidebar', readOnly: true, components: { Cell: '@/components/admin/crm/celulas/PessoaCell' } },
   },
   {
     name: 'registradoPorNome',

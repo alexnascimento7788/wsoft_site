@@ -56,6 +56,13 @@ export const Contatos: CollectionConfig = {
       ],
     },
     {
+      name: 'emailInvalido',
+      label: 'E-mail não existe',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { description: 'Marcado = o e-mail voltou / não existe; sai das mensagens e do sorteio por e-mail.' },
+    },
+    {
       type: 'row',
       fields: [
         {

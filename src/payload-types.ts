@@ -379,6 +379,10 @@ export interface CrmEmpresa {
          * Desmarcado = número inválido/errado; sai da fila de ligação.
          */
         valido?: boolean | null;
+        /**
+         * Marcado = celular sem WhatsApp; continua para ligação, sai do WhatsApp.
+         */
+        semWhatsapp?: boolean | null;
         id?: string | null;
       }[]
     | null;
@@ -486,6 +490,10 @@ export interface CrmContato {
   empresa: number | CrmEmpresa;
   nome?: string | null;
   email?: string | null;
+  /**
+   * Marcado = o e-mail voltou / não existe; sai das mensagens e do sorteio por e-mail.
+   */
+  emailInvalido?: boolean | null;
   papel?: ('decisor' | 'influenciador' | 'operacional' | 'indefinido') | null;
   /**
    * Nome do contato igual à razão social.
@@ -502,6 +510,10 @@ export interface CrmContato {
          * Desmarcado = número inválido/errado; sai da fila de ligação.
          */
         valido?: boolean | null;
+        /**
+         * Marcado = celular sem WhatsApp; continua para ligação, sai do WhatsApp.
+         */
+        semWhatsapp?: boolean | null;
         id?: string | null;
       }[]
     | null;
@@ -572,6 +584,8 @@ export interface CrmRegistrosContato {
     | 'aguardando_retorno'
     | 'nao_atendeu'
     | 'numero_invalido'
+    | 'sem_whatsapp'
+    | 'email_invalido'
     | 'pessoa_errada'
     | 'falou_decisor'
     | 'pediu_retorno'
@@ -1169,6 +1183,7 @@ export interface CrmEmpresasSelect<T extends boolean = true> {
         numero?: T;
         tipo?: T;
         valido?: T;
+        semWhatsapp?: T;
         id?: T;
       };
   cnaes?:
@@ -1219,6 +1234,7 @@ export interface CrmContatosSelect<T extends boolean = true> {
   empresa?: T;
   nome?: T;
   email?: T;
+  emailInvalido?: T;
   papel?: T;
   empresarioIndividual?: T;
   telefones?:
@@ -1227,6 +1243,7 @@ export interface CrmContatosSelect<T extends boolean = true> {
         numero?: T;
         tipo?: T;
         valido?: T;
+        semWhatsapp?: T;
         id?: T;
       };
   naoContatar?: T;

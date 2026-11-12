@@ -181,6 +181,42 @@ describe.skipIf(!local)('CRM — Meu dia e ficha da empresa (Payload + banco des
     expect((await empresa(emp.baixaLivre)).status).toBe('em_contato')
   })
 
+  it('"Não tem WhatsApp" e "E-mail não existe" corrigem o cadastro e os canais; exigem o número / e-mail', async () => {
+    const nova = await criar({
+      collection: 'crm-empresas',
+      data: {
+        razaoSocial: 'EMPRESA FICTICIA canalRuim',
+        cnpj: cnpjComDv('000000880001'),
+        vendedor: u.vend2.id,
+        telefones: [{ numero: '35999990004', tipo: 'celular' }],
+      },
+    })
+    const tentativa = (resultado: string, canal: string, telefoneUsado?: string) =>
+      payload.create({
+        collection: 'crm-registros-contato',
+        data: { empresa: nova.id, canal, resultado, telefoneUsado, dataHora: new Date().toISOString() } as never,
+        ...como(u.vend2),
+      })
+    await criar({
+      collection: 'crm-contatos',
+      data: { empresa: nova.id, nome: 'Pessoa ficticia', email: 'ficticio@teste.local' },
+      ...como(u.vend2),
+    })
+    expect((await empresa(nova.id)).canais).toEqual(['whatsapp', 'telefone', 'email'])
+
+    await expect(tentativa('sem_whatsapp', 'whatsapp')).rejects.toThrow()
+    await tentativa('sem_whatsapp', 'whatsapp', '35999990004')
+    const depois = await empresa(nova.id)
+    expect(depois.telefones[0].semWhatsapp).toBe(true)
+    expect(depois.telefones[0].valido).not.toBe(false)
+    expect(depois.canais).toEqual(['telefone', 'email'])
+
+    await tentativa('email_invalido', 'email', 'Ficticio@teste.local')
+    const pessoa = (await payload.find({ collection: 'crm-contatos', where: { empresa: { equals: nova.id } }, depth: 0 })).docs[0]!
+    expect(pessoa.emailInvalido).toBe(true)
+    expect((await empresa(nova.id)).canais).toEqual(['telefone'])
+  })
+
   it('qualificação e desfecho atualizam o status da empresa', async () => {
     await payload.create({
       collection: 'crm-qualificacoes',

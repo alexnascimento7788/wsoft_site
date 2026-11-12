@@ -7,6 +7,12 @@ import { default as default_d01c27c7406dd144babfbc143fd29101 } from '@/component
 import { default as default_f72ae6ac9653a121de6c1bc48f5fd9d4 } from '@/components/admin/crm/celulas/PessoaCell'
 import { default as default_c2bd0139b5b8612d7db21e816401d9ba } from '@/components/admin/crm/LegendaEmpresas'
 import { default as default_e7bb866ab8e3e39cfe554c1ed9d4c348 } from '@/components/admin/crm/AvisoNasceDaEmpresa'
+import { default as default_151bee8f9197e45820154d0b2e9ddb3d } from '@/components/admin/crm/celulas/EmpresaDaTentativaCell'
+import { default as default_2474223135a45a10db060ca5aef76cd5 } from '@/components/admin/crm/celulas/QuandoCell'
+import { default as default_0485f2da3e38a2f8ced4d15323e18ef6 } from '@/components/admin/crm/celulas/CanalCell'
+import { default as default_b5329b9c1ef96e39059e207bebe22983 } from '@/components/admin/crm/celulas/UsadoCell'
+import { default as default_8f0500f98a9a8f42ec8fa10a18680f40 } from '@/components/admin/crm/celulas/ResultadoCell'
+import { default as default_e2b4a429b6fb7b9161a6c9716f3253a9 } from '@/components/admin/crm/LegendaTentativas'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -41,6 +47,12 @@ export const importMap = {
   "@/components/admin/crm/celulas/PessoaCell#default": default_f72ae6ac9653a121de6c1bc48f5fd9d4,
   "@/components/admin/crm/LegendaEmpresas#default": default_c2bd0139b5b8612d7db21e816401d9ba,
   "@/components/admin/crm/AvisoNasceDaEmpresa#default": default_e7bb866ab8e3e39cfe554c1ed9d4c348,
+  "@/components/admin/crm/celulas/EmpresaDaTentativaCell#default": default_151bee8f9197e45820154d0b2e9ddb3d,
+  "@/components/admin/crm/celulas/QuandoCell#default": default_2474223135a45a10db060ca5aef76cd5,
+  "@/components/admin/crm/celulas/CanalCell#default": default_0485f2da3e38a2f8ced4d15323e18ef6,
+  "@/components/admin/crm/celulas/UsadoCell#default": default_b5329b9c1ef96e39059e207bebe22983,
+  "@/components/admin/crm/celulas/ResultadoCell#default": default_8f0500f98a9a8f42ec8fa10a18680f40,
+  "@/components/admin/crm/LegendaTentativas#default": default_e2b4a429b6fb7b9161a6c9716f3253a9,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,

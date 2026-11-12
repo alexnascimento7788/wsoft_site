@@ -44,3 +44,20 @@ export const meuDiaDoUsuario = cache(async (payload: Payload) => {
   }
   return mapa
 })
+
+// Resumo da empresa para a lista de Tentativas (respeita o acesso de quem está vendo)
+export const empresaResumo = cache(async (payload: Payload, id: number) => {
+  const user = await usuarioLogado(payload)
+  if (!user) return null
+  const { docs } = await payload.find({
+    collection: 'crm-empresas',
+    where: { id: { equals: id } },
+    depth: 0,
+    limit: 1,
+    pagination: false,
+    select: { razaoSocial: true, nomeFantasia: true, cidade: true, uf: true, status: true },
+    overrideAccess: false,
+    user,
+  })
+  return docs[0] ?? null
+})

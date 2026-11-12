@@ -6,6 +6,7 @@ import * as migration_20261108_151500_bloquear_api_rest from './20261108_151500_
 import * as migration_20261108_162624_crm from './20261108_162624_crm';
 import * as migration_20261111_204039_crm_meu_dia from './20261111_204039_crm_meu_dia';
 import * as migration_20261111_211329_crm_aguardando_retorno from './20261111_211329_crm_aguardando_retorno';
+import * as migration_20261111_235906_crm_canal_ruim from './20261111_235906_crm_canal_ruim';
 
 export const migrations = [
   {
@@ -46,6 +47,11 @@ export const migrations = [
   {
     up: migration_20261111_211329_crm_aguardando_retorno.up,
     down: migration_20261111_211329_crm_aguardando_retorno.down,
-    name: '20261111_211329_crm_aguardando_retorno'
+    name: '20261111_211329_crm_aguardando_retorno',
+  },
+  {
+    up: migration_20261111_235906_crm_canal_ruim.up,
+    down: migration_20261111_235906_crm_canal_ruim.down,
+    name: '20261111_235906_crm_canal_ruim'
   },
 ];

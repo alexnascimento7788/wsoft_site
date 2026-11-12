@@ -207,3 +207,67 @@ html[data-theme='dark'] .crm-cel-meudia--marcado {
   border-radius: 3px;
   background: var(--cor);
 }
+
+/* Lista de Tentativas de contato */
+.crm-cel-quando {
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--theme-elevation-600);
+  font-variant-numeric: tabular-nums;
+}
+.crm-cel-quando strong {
+  font-weight: 600;
+  color: var(--theme-elevation-800);
+}
+.crm-cel-quando--hoje strong {
+  color: #e0650c;
+}
+.crm-cel-canal-nome {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.crm-cel-usado {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-elevation-700);
+}
+.crm-cel-vazio {
+  color: var(--theme-elevation-400);
+}
+.collection-list--crm-registros-contato tr:has([data-resultado]) > td:first-child {
+  box-shadow: inset 4px 0 0 var(--resultado, transparent);
+}
+.collection-list--crm-registros-contato tr:has([data-resultado]) > td {
+  background: color-mix(in srgb, var(--resultado, transparent) 5%, transparent);
+}
+.collection-list--crm-registros-contato tr:has([data-resultado='aguardando']) { --resultado: #2563eb; }
+.collection-list--crm-registros-contato tr:has([data-resultado='conversou']) { --resultado: #16a34a; }
+.collection-list--crm-registros-contato tr:has([data-resultado='nao_avancou']) { --resultado: #6b7280; }
+.collection-list--crm-registros-contato tr:has([data-resultado='canal_ruim']) { --resultado: #f4791f; }
+.collection-list--crm-registros-contato tr:has([data-resultado='negativo']) { --resultado: #dc2626; }
+
+.crm-legenda b {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-elevation-700);
+  background: var(--theme-elevation-100);
+}
+.crm-legenda__atalho {
+  padding: 3px 4px 3px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--theme-elevation-150);
+  font-weight: 600;
+}
+.crm-legenda__sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--theme-elevation-150);
+}

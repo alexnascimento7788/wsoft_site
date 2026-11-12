@@ -20,7 +20,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { isCrmAdminUser } from '@/access/roles'
 import { STATUS_LEAD } from '@/collections/Crm/opcoes'
-import { CANAIS_CONTATO, RESULTADOS_CONTATO } from '@/collections/Crm/opcoesContato'
+import { CANAIS_CONTATO, RESULTADOS_CANAL_RUIM, RESULTADOS_CONTATO } from '@/collections/Crm/opcoesContato'
 import { formatarTelefone } from '@/crm/visual'
 import { MeuDiaBotao } from './celulas/MeuDiaBotao'
 import { Status } from './celulas/StatusCell'
@@ -30,11 +30,12 @@ import { Mensagens, type Destino } from './mensagens/Mensagens'
 import './PainelContato.css'
 import './celulas/celulas.css'
 
-type Telefone = { numero: string; tipo?: string | null; valido?: boolean | null }
+type Telefone = { numero: string; tipo?: string | null; valido?: boolean | null; semWhatsapp?: boolean | null }
 type Contato = {
   id: number
   nome?: string | null
   email?: string | null
+  emailInvalido?: boolean | null
   papel?: string | null
   naoContatar?: boolean | null
   telefones?: Telefone[] | null
@@ -54,7 +55,7 @@ type Empresa = {
 }
 type Evento = { id: string; quando: string; tipo: 'tentativa' | 'status' | 'qualificacao' | 'desfecho'; titulo: string; detalhe?: string[]; quem?: string | null }
 
-type Canal = { tipo: 'telefone' | 'email'; valor: string; rotulo: string; celular?: boolean; contatoId?: number }
+type Canal = { tipo: 'telefone' | 'email'; valor: string; rotulo: string; celular?: boolean; whatsapp?: boolean; contatoId?: number }
 type Acao = null | 'tentativa' | 'mensagem' | 'qualificacao' | 'desfecho' | 'titular'
 
 const rotulo = (lista: { label: string; value: string }[], v: string | null | undefined) =>
@@ -68,7 +69,7 @@ type FormTentativa = {
   canais: string[]
   usados: Record<string, string>
   contato: string
-  resultado: string
+  resultados: Record<string, string>
   observacao: string
   proximoPasso: string
   proximoPassoData: string
@@ -78,7 +79,7 @@ const vazio: FormTentativa = {
   canais: ['ligacao'],
   usados: {},
   contato: '',
-  resultado: '',
+  resultados: {},
   observacao: '',
   proximoPasso: '',
   proximoPassoData: '',
@@ -86,6 +87,22 @@ const vazio: FormTentativa = {
 }
 type CanalEscolhido = { canal: string; valor?: string; contatoId?: number }
 const NOME_CANAL: Record<string, string> = { ligacao: 'Ligação', whatsapp: 'WhatsApp', email: 'E-mail', outro: 'Outro' }
+
+// Resultados que só fazem sentido em um canal
+const SO_NO_CANAL: Record<string, string[]> = {
+  numero_invalido: ['ligacao', 'whatsapp'],
+  sem_whatsapp: ['whatsapp'],
+  email_invalido: ['email'],
+}
+const resultadosDoCanal = (canal: string) =>
+  RESULTADOS_CONTATO.filter((o) => !SO_NO_CANAL[o.value] || SO_NO_CANAL[o.value]!.includes(canal))
+
+const AVISO_RESULTADO: Record<string, string> = {
+  numero_invalido: 'O telefone usado será marcado como inválido e sai do sorteio.',
+  sem_whatsapp: 'O número será marcado como “não tem WhatsApp”: continua para ligação, sai do WhatsApp.',
+  email_invalido: 'O e-mail será marcado como “não existe”: sai das mensagens.',
+  nao_contatar: 'nao_contatar',
+}
 
 // A ficha fica DENTRO do formulário do Payload: um <form> aqui seria ignorado pelo navegador
 // e o botão salvaria a empresa. Por isso <div> + onClick, e Enter num campo não envia nada.
@@ -235,27 +252,37 @@ export default function PainelContato() {
     for (const t of lista ?? []) {
       if (t.valido === false || vistos.has(t.numero)) continue
       vistos.add(t.numero)
-      canais.push({ tipo: 'telefone', valor: t.numero, rotulo: rot, celular: t.tipo === 'celular', contatoId })
+      const celular = t.tipo === 'celular'
+      canais.push({ tipo: 'telefone', valor: t.numero, rotulo: rot, celular, whatsapp: celular && !t.semWhatsapp, contatoId })
     }
   }
   addTelefones(empresa.telefones, 'Empresa')
   for (const c of contatos) {
     if (c.naoContatar) continue
     addTelefones(c.telefones, c.nome || 'Contato', c.id)
-    if (c.email && !vistos.has(c.email)) {
+    if (c.email && !c.emailInvalido && !vistos.has(c.email)) {
       vistos.add(c.email)
       canais.push({ tipo: 'email', valor: c.email, rotulo: c.nome || 'Contato', contatoId: c.id })
     }
   }
-  const invalidos = [...(empresa.telefones ?? []), ...contatos.flatMap((c) => c.telefones ?? [])].filter((t) => t.valido === false)
+  const todosTelefones = [...(empresa.telefones ?? []), ...contatos.flatMap((c) => c.telefones ?? [])]
+  const problemas = (
+    [
+      [todosTelefones.filter((t) => t.valido === false).length, 'telefone inválido', 'telefones inválidos'],
+      [todosTelefones.filter((t) => t.valido !== false && t.semWhatsapp).length, 'celular sem WhatsApp', 'celulares sem WhatsApp'],
+      [contatos.filter((c) => c.email && c.emailInvalido).length, 'e-mail que não existe', 'e-mails que não existem'],
+    ] as [number, string, string][]
+  )
+    .filter(([n]) => n > 0)
+    .map(([n, um, varios]) => `${n} ${n === 1 ? um : varios}`)
   const bloqueado = Boolean(empresa.naoContatar)
   const tem = {
-    whatsapp: canais.some((c) => c.celular),
+    whatsapp: canais.some((c) => c.whatsapp),
     telefone: canais.some((c) => c.tipo === 'telefone'),
     email: canais.some((c) => c.tipo === 'email'),
   }
   const destinos: Destino[] = canais
-    .filter((c) => c.tipo === 'email' || c.celular)
+    .filter((c) => c.tipo === 'email' || c.whatsapp)
     .map((c) => ({ tipo: c.tipo === 'email' ? 'email' : 'whatsapp', valor: c.valor, pessoa: c.rotulo === 'Empresa' ? '' : c.rotulo, contatoId: c.contatoId }))
 
   const abrirTentativa = (escolhidos: CanalEscolhido[], resultado = '') => {
@@ -264,7 +291,7 @@ export default function PainelContato() {
       ...vazio,
       canais: escolhidos.map((e) => e.canal),
       usados: Object.fromEntries(escolhidos.filter((e) => e.valor).map((e) => [e.canal, e.valor!])),
-      resultado,
+      resultados: Object.fromEntries(escolhidos.map((e) => [e.canal, resultado])),
       contato: pessoa ? String(pessoa) : '',
     })
     setAcao('tentativa')
@@ -276,11 +303,15 @@ export default function PainelContato() {
       canais: f.canais.includes(canal)
         ? f.canais.filter((c) => c !== canal)
         : CANAIS_CONTATO.map((o) => o.value).filter((v) => v === canal || f.canais.includes(v)),
+      // canal novo começa com o mesmo resultado dos outros (ex.: os dois "aguardando retorno")
+      resultados: f.resultados[canal]
+        ? f.resultados
+        : { ...f.resultados, [canal]: Object.values(f.resultados).find((r) => r && !RESULTADOS_CANAL_RUIM.includes(r)) ?? '' },
     }))
 
   const opcoesDoCanal = (canal: string) =>
     canais.filter((c) =>
-      canal === 'ligacao' ? c.tipo === 'telefone' : canal === 'whatsapp' ? c.celular : canal === 'email' ? c.tipo === 'email' : true,
+      canal === 'ligacao' ? c.tipo === 'telefone' : canal === 'whatsapp' ? c.whatsapp : canal === 'email' ? c.tipo === 'email' : true,
     )
 
   const depoisDeSalvar = async () => {
@@ -291,7 +322,12 @@ export default function PainelContato() {
 
   const registrar = async () => {
     if (!form.canais.length) return toast.error('Marque pelo menos um canal.')
-    if (!form.resultado) return toast.error('Escolha o resultado da tentativa.')
+    for (const canal of form.canais) {
+      const res = form.resultados[canal]
+      if (!res) return toast.error(`Escolha o resultado de ${NOME_CANAL[canal] ?? canal}.`)
+      if (RESULTADOS_CANAL_RUIM.includes(res) && !form.usados[canal])
+        return toast.error(`Em ${NOME_CANAL[canal] ?? canal}, escolha ${canal === 'email' ? 'o e-mail' : 'o número'} usado para o sistema corrigir.`)
+    }
     setSalvando(true)
     const dataHora = form.quando ? new Date(form.quando).toISOString() : new Date().toISOString()
     const feitos: string[] = []
@@ -305,7 +341,7 @@ export default function PainelContato() {
           canal,
           telefoneUsado: form.usados[canal] || undefined,
           contato: form.contato ? Number(form.contato) : undefined,
-          resultado: form.resultado,
+          resultado: form.resultados[canal],
           observacao: form.observacao || undefined,
           proximoPasso: form.proximoPasso || undefined,
           proximoPassoData: form.proximoPassoData ? new Date(form.proximoPassoData).toISOString() : undefined,
@@ -405,7 +441,7 @@ export default function PainelContato() {
                     {c.tipo === 'telefone' ? formatarTelefone(c.valor) : c.valor}
                     <small>
                       {c.rotulo}
-                      {c.tipo === 'telefone' ? ` · ${c.celular ? 'celular' : 'fixo'}` : ''}
+                      {c.tipo === 'telefone' ? ` · ${c.celular ? (c.whatsapp ? 'celular' : 'celular sem WhatsApp') : 'fixo'}` : ''}
                     </small>
                   </span>
                   <span className="crm-contato__acoes">
@@ -422,7 +458,7 @@ export default function PainelContato() {
                         <a href={`tel:+55${c.valor}`} onClick={() => abrirTentativa([{ ...c, canal: 'ligacao' }])} className="crm-btn crm-btn--ligar">
                           <Phone size={13} /> Ligar
                         </a>
-                        {c.celular && (
+                        {c.whatsapp && (
                           <button
                             type="button"
                             onClick={() => setAcao('mensagem')}
@@ -443,8 +479,8 @@ export default function PainelContato() {
               ))}
             </ul>
           )}
-          {invalidos.length > 0 && (
-            <p className="crm-contato__invalidos">{invalidos.length} telefone(s) marcado(s) como inválido(s) — fora do sorteio.</p>
+          {problemas.length > 0 && (
+            <p className="crm-contato__invalidos">Fora dos contatos: {problemas.join(' · ')}.</p>
           )}
 
           <div className="crm-acoes">
@@ -519,23 +555,52 @@ export default function PainelContato() {
                   })}
                 </div>
               </div>
+              <div className="crm-tentativa__canais">
+                {form.canais.map((canal) => {
+                  const res = form.resultados[canal] ?? ''
+                  return (
+                    <div key={canal} className="crm-tentativa__canal">
+                      <strong>{NOME_CANAL[canal] ?? canal}</strong>
+                      <label>
+                        {canal === 'email' ? 'E-mail usado' : canal === 'outro' ? 'Contato usado' : 'Telefone usado'}
+                        <select
+                          value={form.usados[canal] ?? ''}
+                          onChange={(e) => setForm({ ...form, usados: { ...form.usados, [canal]: e.target.value } })}
+                        >
+                          <option value="">—</option>
+                          {opcoesDoCanal(canal).map((c) => (
+                            <option key={`${c.tipo}-${c.valor}`} value={c.valor}>
+                              {c.tipo === 'telefone' ? formatarTelefone(c.valor) : c.valor} ({c.rotulo})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Resultado
+                        <select
+                          value={res}
+                          onChange={(e) => setForm({ ...form, resultados: { ...form.resultados, [canal]: e.target.value } })}
+                        >
+                          <option value="">Escolha…</option>
+                          {resultadosDoCanal(canal).map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {AVISO_RESULTADO[res] && (
+                        <small className="crm-contato__aviso">
+                          {res === 'nao_contatar'
+                            ? `Será aplicado “Não contatar” ${form.contato ? 'nesta pessoa' : 'na empresa'}, registrando quem e quando.`
+                            : AVISO_RESULTADO[res]}
+                        </small>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
               <div className="crm-contato__linha">
-                {form.canais.map((canal) => (
-                  <label key={canal}>
-                    {canal === 'email' ? 'E-mail usado' : canal === 'outro' ? 'Contato usado (Outro)' : `Telefone usado (${NOME_CANAL[canal]})`}
-                    <select
-                      value={form.usados[canal] ?? ''}
-                      onChange={(e) => setForm({ ...form, usados: { ...form.usados, [canal]: e.target.value } })}
-                    >
-                      <option value="">—</option>
-                      {opcoesDoCanal(canal).map((c) => (
-                        <option key={`${c.tipo}-${c.valor}`} value={c.valor}>
-                          {c.tipo === 'telefone' ? formatarTelefone(c.valor) : c.valor} ({c.rotulo})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
                 <label>
                   Pessoa contatada
                   <select value={form.contato} onChange={(e) => setForm({ ...form, contato: e.target.value })}>
@@ -547,18 +612,6 @@ export default function PainelContato() {
                     ))}
                   </select>
                 </label>
-              </div>
-              <label>
-                Resultado
-                <select required value={form.resultado} onChange={(e) => setForm({ ...form, resultado: e.target.value })}>
-                  <option value="">Escolha…</option>
-                  {RESULTADOS_CONTATO.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
               <label className="crm-contato__quando-campo">
                 Quando foi {semTentativa ? '(o contato que você já fez)' : '(em branco = agora)'}
                 <input
@@ -568,14 +621,7 @@ export default function PainelContato() {
                   onChange={(e) => setForm({ ...form, quando: e.target.value })}
                 />
               </label>
-              {form.resultado === 'numero_invalido' && (
-                <small className="crm-contato__aviso">O telefone usado será marcado como inválido e sai do sorteio.</small>
-              )}
-              {form.resultado === 'nao_contatar' && (
-                <small className="crm-contato__aviso">
-                  Será aplicado “Não contatar” {form.contato ? 'nesta pessoa' : 'na empresa'}, registrando quem e quando.
-                </small>
-              )}
+              </div>
               <label>
                 Observação
                 <textarea rows={2} value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />

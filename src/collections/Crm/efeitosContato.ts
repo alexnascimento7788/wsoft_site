@@ -3,7 +3,7 @@ import type { CollectionAfterChangeHook, PayloadRequest } from 'payload'
 import { diaDe } from '../../crm/meuDia'
 import { marcarFeitoNoDia } from './meuDiaEndpoints'
 
-type Telefone = { id?: string | null; numero: string; tipo?: string | null; valido?: boolean | null }
+type Telefone = { id?: string | null; numero: string; tipo?: string | null; valido?: boolean | null; semWhatsapp?: boolean | null }
 
 const idDe = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number | null | undefined))
 const nomeDe = (req: PayloadRequest) =>
@@ -28,12 +28,14 @@ export async function registrarMovimentacao(
   })
 }
 
-const invalidar = (telefones: Telefone[] | null | undefined, numero: string) => {
+// Marca o telefone (pelo número) com a correção: inválido, ou celular sem WhatsApp
+const corrigirTelefone = (telefones: Telefone[] | null | undefined, numero: string, campo: 'valido' | 'semWhatsapp') => {
+  const valor = campo === 'valido' ? false : true
   let mudou = false
   const lista = (telefones ?? []).map((t) => {
-    if (t.numero === numero && t.valido !== false) {
+    if (t.numero === numero && t[campo] !== valor) {
       mudou = true
-      return { ...t, valido: false }
+      return { ...t, [campo]: valor }
     }
     return t
   })
@@ -43,6 +45,8 @@ const invalidar = (telefones: Telefone[] | null | undefined, numero: string) => 
 // Depois de registrar uma tentativa de contato:
 // - o lead sai da fila para "Em contato";
 // - "Número inválido ou errado" marca aquele telefone como inválido (sai da fila de ligação);
+// - "Número não tem WhatsApp" marca o celular como sem WhatsApp (continua para ligação);
+// - "E-mail não existe" marca o e-mail da pessoa como inexistente (sai das mensagens);
 // - "Pediu para não ser contatado" aplica "Não contatar" (na pessoa, ou na empresa se não houver pessoa);
 // - o próximo passo com data vira o "retornar em" do lead.
 // Quem registrou já teve o acesso à empresa conferido; as alterações abaixo são do sistema.
@@ -59,9 +63,16 @@ export const aplicarEfeitosDoContato: CollectionAfterChangeHook = async ({ doc, 
   if (ANTES_DO_CONTATO.includes(empresa.status)) dados.status = 'em_contato'
   if (doc.proximoPassoData) dados.retornarEm = doc.proximoPassoData
 
-  if (doc.resultado === 'numero_invalido' && numero) {
-    const telefones = invalidar(empresa.telefones as Telefone[], numero)
+  const campoTelefone =
+    doc.resultado === 'numero_invalido' ? 'valido' : doc.resultado === 'sem_whatsapp' ? 'semWhatsapp' : null
+  const emailUsado = String(doc.telefoneUsado ?? '').trim().toLowerCase()
+  const corrigirEmail = doc.resultado === 'email_invalido' && emailUsado.includes('@')
+
+  if (campoTelefone && numero) {
+    const telefones = corrigirTelefone(empresa.telefones as Telefone[], numero, campoTelefone)
     if (telefones) dados.telefones = telefones
+  }
+  if ((campoTelefone && numero) || corrigirEmail) {
     const { docs: contatos } = await payload.find({
       collection: 'crm-contatos',
       where: { empresa: { equals: empresaId } },
@@ -71,9 +82,16 @@ export const aplicarEfeitosDoContato: CollectionAfterChangeHook = async ({ doc, 
       overrideAccess: true,
     })
     for (const c of contatos) {
-      const lista = invalidar(c.telefones as Telefone[], numero)
-      if (lista) {
-        await payload.update({ collection: 'crm-contatos', id: c.id, data: { telefones: lista as never }, req, overrideAccess: true })
+      const lista = campoTelefone && numero ? corrigirTelefone(c.telefones as Telefone[], numero, campoTelefone) : null
+      const email = corrigirEmail && c.email?.trim().toLowerCase() === emailUsado && !c.emailInvalido
+      if (lista || email) {
+        await payload.update({
+          collection: 'crm-contatos',
+          id: c.id,
+          data: { ...(lista ? { telefones: lista as never } : {}), ...(email ? { emailInvalido: true } : {}) },
+          req,
+          overrideAccess: true,
+        })
       }
     }
   }

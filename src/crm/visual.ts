@@ -48,3 +48,15 @@ export function situacaoDaEmpresa(status: string | null | undefined, naoContatar
   if (status === 'venda_nao_realizada' || status === 'descartado') return 'perdido'
   return 'em_contato'
 }
+
+// Grupos de resultado da tentativa (cor da etiqueta, faixa da linha e legenda da lista de Tentativas)
+export const GRUPOS_RESULTADO = [
+  { valor: 'aguardando', rotulo: 'Aguardando retorno', cor: '#2563EB', resultados: ['aguardando_retorno'] },
+  { valor: 'conversou', rotulo: 'Conversou', cor: '#16A34A', resultados: ['falou_decisor', 'pediu_retorno'] },
+  { valor: 'nao_avancou', rotulo: 'Não atendeu / pessoa errada', cor: '#6B7280', resultados: ['nao_atendeu', 'pessoa_errada'] },
+  { valor: 'canal_ruim', rotulo: 'Canal com problema', cor: '#F4791F', resultados: ['numero_invalido', 'sem_whatsapp', 'email_invalido'] },
+  { valor: 'negativo', rotulo: 'Sem interesse / não contatar', cor: '#DC2626', resultados: ['sem_interesse', 'nao_contatar'] },
+] as const
+
+export const grupoDoResultado = (resultado: string | null | undefined) =>
+  GRUPOS_RESULTADO.find((g) => (g.resultados as readonly string[]).includes(resultado ?? '')) ?? null

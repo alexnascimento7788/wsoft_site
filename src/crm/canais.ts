@@ -3,14 +3,14 @@
 
 export type CanalEmpresa = 'whatsapp' | 'telefone' | 'email'
 
-type Telefone = { numero?: string | null; tipo?: string | null; valido?: boolean | null }
-type Pessoa = { email?: string | null; naoContatar?: boolean | null; telefones?: Telefone[] | null }
+type Telefone = { numero?: string | null; tipo?: string | null; valido?: boolean | null; semWhatsapp?: boolean | null }
+type Pessoa = { email?: string | null; emailInvalido?: boolean | null; naoContatar?: boolean | null; telefones?: Telefone[] | null }
 
 export const ORDEM_CANAIS: CanalEmpresa[] = ['whatsapp', 'telefone', 'email']
 
-// - WhatsApp: algum celular válido (da empresa ou de uma pessoa que pode ser contatada);
+// - WhatsApp: algum celular válido que não foi marcado "não tem WhatsApp" (da empresa ou de uma pessoa que pode ser contatada);
 // - Telefone: algum número válido (fixo ou celular);
-// - E-mail: alguma pessoa com e-mail.
+// - E-mail: alguma pessoa com e-mail que não foi marcado "não existe".
 // Quem está como "Não contatar" não conta.
 export function calcularCanais(telefonesEmpresa: Telefone[] | null | undefined, pessoas: Pessoa[]): CanalEmpresa[] {
   const ativas = pessoas.filter((p) => !p.naoContatar)
@@ -18,9 +18,9 @@ export function calcularCanais(telefonesEmpresa: Telefone[] | null | undefined, 
     (t) => t.numero && t.valido !== false,
   )
   const tem = {
-    whatsapp: telefones.some((t) => t.tipo === 'celular'),
+    whatsapp: telefones.some((t) => t.tipo === 'celular' && !t.semWhatsapp),
     telefone: telefones.length > 0,
-    email: ativas.some((p) => Boolean(p.email?.trim())),
+    email: ativas.some((p) => Boolean(p.email?.trim()) && !p.emailInvalido),
   }
   return ORDEM_CANAIS.filter((c) => tem[c])
 }
