@@ -502,3 +502,20 @@ html[data-theme='dark'] .meudia {
 .meudia__tag-nao-atendida {
   color: #c2410c;
 }
+
+/* Enquanto troca de dia: a lista atual fica apagada até a nova chegar */
+.meudia__corpo:has(.meudia__plan--carregando) .meudia__lista {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.meudia__plan--carregando .meudia__cal-dia--escolhido {
+  animation: meudia-pulso 0.9s ease-in-out infinite;
+}
+
+@keyframes meudia-pulso {
+  50% {
+    opacity: 0.6;
+  }
+}

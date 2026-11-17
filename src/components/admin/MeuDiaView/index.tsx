@@ -6,7 +6,15 @@ import React from 'react'
 
 import { isCrmAdminUser } from '@/access/roles'
 import { podeTerMeuDia } from '@/collections/Crm/meuDiaEndpoints'
-import { QUANTIDADE_PADRAO, diaDe, diaValido, hoje, inicioDoDia, serieIndicador, somarDias } from '@/crm/meuDia'
+import {
+  QUANTIDADE_PADRAO,
+  diaDe,
+  diaValido,
+  hoje,
+  inicioDoDia,
+  serieIndicador,
+  somarDias,
+} from '@/crm/meuDia'
 import { Grafico, type PontoGrafico } from './Grafico'
 import { ListaDoDia, type ItemDoDia } from './ListaDoDia'
 import { Planejador, type MarcaDia } from './Planejador'
@@ -17,13 +25,19 @@ import './index.css'
 const idDe = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
 // Não atendida: o banco marca na virada do dia; dia passado sem contato já conta assim mesmo
 // se a virada ainda não rodou
-const naoAtendida = (i: { feito?: boolean | null; naoAtendido?: boolean | null; dia: string }, diaHoje: string) =>
-  !i.feito && (Boolean(i.naoAtendido) || i.dia < diaHoje)
+const naoAtendida = (
+  i: { feito?: boolean | null; naoAtendido?: boolean | null; dia: string },
+  diaHoje: string,
+) => !i.feito && (Boolean(i.naoAtendido) || i.dia < diaHoje)
 const DIAS_INDICADOR = 30
 
 // Meu dia (/admin/crm/meu-dia): o vendedor escolhe o dia no calendário e quantas empresas quer
 // prospectar; o sistema sorteia (Alta → Média → Baixa). Abaixo, o indicador meta x feito.
-export default async function MeuDiaView({ initPageResult, params, searchParams }: AdminViewServerProps) {
+export default async function MeuDiaView({
+  initPageResult,
+  params,
+  searchParams,
+}: AdminViewServerProps) {
   const { req, locale, permissions, visibleEntities } = initPageResult
   const { payload, user } = req
   const adminRoute = payload.config.routes.admin
@@ -46,7 +60,8 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
     </DefaultTemplate>
   )
 
-  if (!podeTerMeuDia(user)) return template(<p>O Meu dia é para quem tem o perfil de vendedor no CRM.</p>)
+  if (!podeTerMeuDia(user))
+    return template(<p>O Meu dia é para quem tem o perfil de vendedor no CRM.</p>)
 
   const admin = isCrmAdminUser(user)
   const diaHoje = hoje()
@@ -57,40 +72,120 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
   const proprio = alvoId === user.id
   const ver = { overrideAccess: false, user, req } as const
 
-  const vendedores = admin
-    ? (
-        await payload.find({
-          collection: 'users',
-          where: { roles: { in: ['vendedor'] } },
-          depth: 0,
-          pagination: false,
-          select: { name: true, email: true },
-          ...ver,
-        })
-      ).docs.map((u) => ({ id: u.id, nome: u.name || u.email }))
-    : []
+  // Todas as consultas da tela saem juntas (em paralelo): a troca de data espera só a mais lenta
+  const inicioCal = `${somarDias(`${dia.slice(0, 7)}-01`, -31).slice(0, 7)}-01`
+  const fimCal = somarDias(`${dia.slice(0, 7)}-01`, 62)
+  const inicioInd = somarDias(diaHoje, -(DIAS_INDICADOR - 1))
+  const [
+    vendedores,
+    { docs: itensDocs },
+    { docs: diaDocs },
+    { docs: itensCal },
+    { docs: diasInd },
+    { docs: registros },
+    { docs: agendaInd },
+  ] = await Promise.all([
+    admin
+      ? payload
+          .find({
+            collection: 'users',
+            where: { roles: { in: ['vendedor'] } },
+            depth: 0,
+            pagination: false,
+            select: { name: true, email: true },
+            ...ver,
+          })
+          .then((r) => r.docs.map((u) => ({ id: u.id, nome: u.name || u.email })))
+      : Promise.resolve([] as { id: number; nome: string }[]),
 
-  // Itens do dia escolhido
-  const { docs: itensDocs } = await payload.find({
-    collection: 'crm-dia-itens',
-    where: { and: [{ usuario: { equals: alvoId } }, { dia: { equals: dia } }] },
-    depth: 1,
-    pagination: false,
-    sort: 'createdAt',
-    populate: {
-      'crm-empresas': {
-        razaoSocial: true,
-        nomeFantasia: true,
-        cidade: true,
-        uf: true,
-        status: true,
-        canais: true,
-        prioridade: true,
-        retornarEm: true,
+    // Itens do dia escolhido
+    payload.find({
+      collection: 'crm-dia-itens',
+      where: { and: [{ usuario: { equals: alvoId } }, { dia: { equals: dia } }] },
+      depth: 1,
+      pagination: false,
+      sort: 'createdAt',
+      populate: {
+        'crm-empresas': {
+          razaoSocial: true,
+          nomeFantasia: true,
+          cidade: true,
+          uf: true,
+          status: true,
+          canais: true,
+          prioridade: true,
+          retornarEm: true,
+        },
       },
-    },
-    ...ver,
-  })
+      ...ver,
+    }),
+    payload.find({
+      collection: 'crm-dias',
+      where: { and: [{ usuario: { equals: alvoId } }, { dia: { equals: dia } }] },
+      limit: 1,
+      depth: 0,
+      ...ver,
+    }),
+    // Marcas do calendário: 3 meses em volta do dia escolhido
+    payload.find({
+      collection: 'crm-dia-itens',
+      where: {
+        and: [
+          { usuario: { equals: alvoId } },
+          { dia: { greater_than_equal: inicioCal } },
+          { dia: { less_than: fimCal } },
+        ],
+      },
+      depth: 0,
+      pagination: false,
+      select: { dia: true, feito: true, naoAtendido: true },
+      ...ver,
+    }),
+    // Indicador meta x feito: últimos 30 dias até hoje
+    payload.find({
+      collection: 'crm-dias',
+      where: {
+        and: [
+          { usuario: { equals: alvoId } },
+          { dia: { greater_than_equal: inicioInd } },
+          { dia: { less_than_equal: diaHoje } },
+        ],
+      },
+      depth: 0,
+      pagination: false,
+      select: { dia: true, meta: true },
+      ...ver,
+    }),
+    payload.find({
+      collection: 'crm-registros-contato',
+      where: {
+        and: [
+          { registradoPor: { equals: alvoId } },
+          { dataHora: { greater_than_equal: inicioDoDia(inicioInd).toISOString() } },
+        ],
+      },
+      depth: 1,
+      pagination: false,
+      select: { dataHora: true, empresa: true },
+      populate: { 'crm-empresas': { razaoSocial: true, nomeFantasia: true } },
+      ...ver,
+    }),
+    // Agenda dos últimos 30 dias até ontem: prospectadas (feitas) x não atendidas
+    payload.find({
+      collection: 'crm-dia-itens',
+      where: {
+        and: [
+          { usuario: { equals: alvoId } },
+          { dia: { greater_than_equal: inicioInd } },
+          { dia: { less_than: diaHoje } },
+        ],
+      },
+      depth: 0,
+      pagination: false,
+      select: { dia: true, feito: true, naoAtendido: true },
+      ...ver,
+    }),
+  ])
   const itens: ItemDoDia[] = itensDocs.map((i) => {
     const e = typeof i.empresa === 'object' ? i.empresa : null
     return {
@@ -109,26 +204,8 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
     }
   })
 
-  const { docs: diaDocs } = await payload.find({
-    collection: 'crm-dias',
-    where: { and: [{ usuario: { equals: alvoId } }, { dia: { equals: dia } }] },
-    limit: 1,
-    depth: 0,
-    ...ver,
-  })
   const meta = diaDocs[0]?.meta ?? 0
 
-  // Marcas do calendário: 3 meses em volta do dia escolhido
-  const inicioCal = `${somarDias(`${dia.slice(0, 7)}-01`, -31).slice(0, 7)}-01`
-  const fimCal = somarDias(`${dia.slice(0, 7)}-01`, 62)
-  const { docs: itensCal } = await payload.find({
-    collection: 'crm-dia-itens',
-    where: { and: [{ usuario: { equals: alvoId } }, { dia: { greater_than_equal: inicioCal } }, { dia: { less_than: fimCal } }] },
-    depth: 0,
-    pagination: false,
-    select: { dia: true, feito: true, naoAtendido: true },
-    ...ver,
-  })
   const marcas: Record<string, MarcaDia> = {}
   for (const i of itensCal) {
     const m = (marcas[i.dia] ??= { total: 0, feitos: 0, naoAtendidos: 0 })
@@ -137,38 +214,6 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
     else if (naoAtendida(i, diaHoje)) m.naoAtendidos++
   }
 
-  // Indicador meta x feito: últimos 30 dias até hoje
-  const inicioInd = somarDias(diaHoje, -(DIAS_INDICADOR - 1))
-  const [{ docs: diasInd }, { docs: registros }, { docs: agendaInd }] = await Promise.all([
-    payload.find({
-      collection: 'crm-dias',
-      where: { and: [{ usuario: { equals: alvoId } }, { dia: { greater_than_equal: inicioInd } }, { dia: { less_than_equal: diaHoje } }] },
-      depth: 0,
-      pagination: false,
-      select: { dia: true, meta: true },
-      ...ver,
-    }),
-    payload.find({
-      collection: 'crm-registros-contato',
-      where: {
-        and: [{ registradoPor: { equals: alvoId } }, { dataHora: { greater_than_equal: inicioDoDia(inicioInd).toISOString() } }],
-      },
-      depth: 1,
-      pagination: false,
-      select: { dataHora: true, empresa: true },
-      populate: { 'crm-empresas': { razaoSocial: true, nomeFantasia: true } },
-      ...ver,
-    }),
-    // Agenda dos últimos 30 dias até ontem: prospectadas (feitas) x não atendidas
-    payload.find({
-      collection: 'crm-dia-itens',
-      where: { and: [{ usuario: { equals: alvoId } }, { dia: { greater_than_equal: inicioInd } }, { dia: { less_than: diaHoje } }] },
-      depth: 0,
-      pagination: false,
-      select: { dia: true, feito: true, naoAtendido: true },
-      ...ver,
-    }),
-  ])
   const agendadasPassadas = agendaInd.length
   const naoAtendidas = agendaInd.filter((i) => naoAtendida(i, diaHoje)).length
   const metas: Record<string, number> = Object.fromEntries(diasInd.map((d) => [d.dia, d.meta ?? 0]))
@@ -188,7 +233,9 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
   const totalMeta = pontos.reduce((s, p) => s + p.meta, 0)
   const totalFeito = pontos.reduce((s, p) => s + Math.min(p.feito, p.meta || p.feito), 0)
   const diasSemAcao = pontos.filter((p) => p.dia < diaHoje && p.feito === 0).length
-  const nomeAlvo = proprio ? null : vendedores.find((v) => v.id === alvoId)?.nome ?? `Usuário ${alvoId}`
+  const nomeAlvo = proprio
+    ? null
+    : (vendedores.find((v) => v.id === alvoId)?.nome ?? `Usuário ${alvoId}`)
 
   return template(
     <>
@@ -241,7 +288,14 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
           podeEditar={proprio}
           usuario={proprio ? null : alvoId}
         />
-        <ListaDoDia dia={dia} hoje={diaHoje} itens={itens} meta={meta} podeEditar={proprio} adminRoute={adminRoute} />
+        <ListaDoDia
+          dia={dia}
+          hoje={diaHoje}
+          itens={itens}
+          meta={meta}
+          podeEditar={proprio}
+          adminRoute={adminRoute}
+        />
       </div>
 
       <section className="meudia__indicador">
@@ -255,7 +309,9 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
             <strong>{pontos.reduce((s, p) => s + p.feito, 0)}</strong>
             {totalMeta > 0 && (
               <span className="meudia__kpi-barra" aria-hidden>
-                <span style={{ width: `${Math.min(100, Math.round((totalFeito / totalMeta) * 100))}%` }} />
+                <span
+                  style={{ width: `${Math.min(100, Math.round((totalFeito / totalMeta) * 100))}%` }}
+                />
               </span>
             )}
           </div>
@@ -268,7 +324,8 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
             <strong>{naoAtendidas}</strong>
             {agendadasPassadas > 0 && (
               <span className="meudia__kpi-nota">
-                {agendadasPassadas - naoAtendidas} prospectada(s) de {agendadasPassadas} agendada(s) até ontem
+                {agendadasPassadas - naoAtendidas} prospectada(s) de {agendadasPassadas} agendada(s)
+                até ontem
               </span>
             )}
           </div>

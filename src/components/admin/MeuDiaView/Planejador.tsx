@@ -3,7 +3,7 @@
 import { toast, useConfig } from '@payloadcms/ui'
 import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useState, useTransition } from 'react'
 
 export type MarcaDia = { total: number; feitos: number; naoAtendidos: number }
 
@@ -35,6 +35,10 @@ export function Planejador({
   const [mes, setMes] = useState(dia.slice(0, 7))
   const [quantidade, setQuantidade] = useState(quantidadePadrao)
   const [enviando, setEnviando] = useState(false)
+  // Troca de dia: o dia clicado já aparece escolhido enquanto o servidor monta a lista
+  const [carregando, iniciar] = useTransition()
+  const [clicado, setClicado] = useState<string | null>(null)
+  const escolhido = carregando && clicado ? clicado : dia
 
   const [ano, m] = mes.split('-').map(Number) as [number, number]
   const primeiro = new Date(Date.UTC(ano, m - 1, 1)).getUTCDay()
@@ -47,8 +51,12 @@ export function Planejador({
     const d = new Date(Date.UTC(ano, m - 1 + delta, 1))
     setMes(`${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`)
   }
-  const irPara = (d: string) =>
-    router.push(`${routes.admin}/crm/meu-dia?dia=${d}${usuario ? `&usuario=${usuario}` : ''}`)
+  const irPara = (d: string) => {
+    if (d === dia && !carregando) return
+    setClicado(d)
+    if (d.slice(0, 7) !== mes) setMes(d.slice(0, 7))
+    iniciar(() => router.push(`${routes.admin}/crm/meu-dia?dia=${d}${usuario ? `&usuario=${usuario}` : ''}`))
+  }
 
   const passado = dia < hoje
   const montar = async () => {
@@ -71,7 +79,7 @@ export function Planejador({
   }
 
   return (
-    <section className="meudia__plan">
+    <section className={`meudia__plan${carregando ? ' meudia__plan--carregando' : ''}`} aria-busy={carregando}>
       <div className="meudia__cal">
         <div className="meudia__cal-topo">
           <button type="button" className="crm-btn crm-btn--icone" onClick={() => mudarMes(-1)} aria-label="Mês anterior">
@@ -95,7 +103,7 @@ export function Planejador({
             const marca = marcas[d]
             const classes = [
               'meudia__cal-dia',
-              d === dia && 'meudia__cal-dia--escolhido',
+              d === escolhido && 'meudia__cal-dia--escolhido',
               d === hoje && 'meudia__cal-dia--hoje',
               d < hoje && 'meudia__cal-dia--passado',
             ]
