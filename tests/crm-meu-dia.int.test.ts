@@ -249,6 +249,50 @@ describe.skipIf(!local)('CRM — Meu dia e ficha da empresa (Payload + banco des
     expect(s.protocolo).toMatch(/^LGPD-\d{8}-[A-Z0-9]{4}$/)
   })
 
+  it('virada do dia (função no banco): pendente de dia passado vira "não atendida"; contato depois não conta para trás', async () => {
+    const e = await criar({ collection: 'crm-empresas', data: { razaoSocial: 'VIRADA', cnpj: cnpjComDv('000000770001'), vendedor: u.vend1.id, telefones: [{ numero: '35999990077', tipo: 'celular' }] } })
+    const e2 = await criar({ collection: 'crm-empresas', data: { razaoSocial: 'VIRADA FEITA', cnpj: cnpjComDv('000000780001'), vendedor: u.vend1.id, telefones: [{ numero: '35999990078', tipo: 'celular' }] } })
+    const ontem = somarDias(hoje(), -1)
+    const novo = (dia: string, empresa: number, feito = false) =>
+      criar({ collection: 'crm-dia-itens', data: { usuario: u.vend1.id, dia, empresa, feito } })
+    const pendenteOntem = await novo(ontem, e.id)
+    const feitoOntem = await novo(ontem, e2.id, true)
+    const pendenteHoje = await novo(hoje(), e2.id)
+
+    const pool = new pg.Pool({ connectionString: uri })
+    const { rows } = await pool.query(`SELECT crm_virada_do_dia() AS n`)
+    const deNovo = await pool.query(`SELECT crm_virada_do_dia() AS n`)
+    await pool.end()
+    expect(rows[0].n).toBeGreaterThanOrEqual(1)
+    expect(deNovo.rows[0].n).toBe(0) // idempotente
+
+    const ler = (id: number) => payload.findByID({ collection: 'crm-dia-itens', id, depth: 0 })
+    expect(await ler(pendenteOntem.id)).toMatchObject({ feito: false, naoAtendido: true })
+    expect((await ler(pendenteOntem.id)).naoAtendidoEm).toBeTruthy()
+    expect(await ler(feitoOntem.id)).toMatchObject({ feito: true, naoAtendido: false })
+    expect(await ler(pendenteHoje.id)).toMatchObject({ feito: false, naoAtendido: false })
+
+    // Não atendida não reserva a empresa: ela pode ser marcada para hoje de novo
+    expect((await endpoint('/marcar', u.vend1, { empresa: e.id })).json.ok).toBe(true)
+
+    // Tentativa hoje: conta só no dia de hoje, ontem continua não atendida
+    await payload.create({
+      collection: 'crm-registros-contato',
+      data: { empresa: e.id, canal: 'ligacao', resultado: 'nao_atendeu', dataHora: new Date().toISOString() } as never,
+      ...como(u.vend1),
+    })
+    expect(await ler(pendenteOntem.id)).toMatchObject({ feito: false, naoAtendido: true })
+    expect((await itens(u.vend1)).find((i) => i.empresa === e.id)?.feito).toBe(true)
+
+    // Tentativa lançada com a data de ontem: o dia de ontem volta a contar como feito
+    await payload.create({
+      collection: 'crm-registros-contato',
+      data: { empresa: e.id, canal: 'ligacao', resultado: 'nao_atendeu', dataHora: `${ontem}T15:00:00.000-03:00` } as never,
+      ...como(u.vend1),
+    })
+    expect(await ler(pendenteOntem.id)).toMatchObject({ feito: true, naoAtendido: false })
+  })
+
   it('apagar a empresa (LGPD) apaga junto os itens do Meu dia', async () => {
     const e = await criar({ collection: 'crm-empresas', data: { razaoSocial: 'APAGAR', cnpj: cnpjComDv('000000990001'), vendedor: u.vend1.id, telefones: [{ numero: '35999990099', tipo: 'celular' }] } })
     await endpoint('/marcar', u.vend1, { empresa: e.id })

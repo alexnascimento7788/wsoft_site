@@ -57,7 +57,8 @@ const itensDoDia = (req: PayloadRequest, user: Usuario, dia: string) =>
     })
     .then((r) => r.docs)
 
-// Empresas já reservadas: pendentes em algum dia de hoje em diante (de qualquer vendedor)
+// Empresas já reservadas: pendentes em algum dia de hoje em diante (de qualquer vendedor).
+// Dias que já passaram não reservam nada: o que não foi atendido volta a poder ser sorteado.
 async function reservadas(req: PayloadRequest) {
   const { docs } = await req.payload.find({
     collection: 'crm-dia-itens',
@@ -204,8 +205,9 @@ const marcar: Endpoint = {
 
 export const endpointsMeuDia: Endpoint[] = [planejar, marcar]
 
-// Depois de uma tentativa de contato: a empresa conta como "feita" no dia de quem registrou
-// (e em dias anteriores em que ela ainda estava pendente).
+// Depois de uma tentativa de contato: a empresa conta como "feita" no dia da tentativa, na agenda
+// de quem registrou. Só aquele dia: agenda de dias anteriores que ficou sem contato continua como
+// "não atendida". Se a tentativa for lançada com data retroativa, o dia dela volta a contar como feito.
 export async function marcarFeitoNoDia(req: PayloadRequest, usuario: number, empresa: number, dia: string) {
   const { docs } = await req.payload.find({
     collection: 'crm-dia-itens',
@@ -214,7 +216,7 @@ export async function marcarFeitoNoDia(req: PayloadRequest, usuario: number, emp
         { usuario: { equals: usuario } },
         { empresa: { equals: empresa } },
         { feito: { not_equals: true } },
-        { dia: { less_than_equal: dia } },
+        { dia: { equals: dia } },
       ],
     },
     depth: 0,
@@ -226,7 +228,7 @@ export async function marcarFeitoNoDia(req: PayloadRequest, usuario: number, emp
     await req.payload.update({
       collection: 'crm-dia-itens',
       id: i.id,
-      data: { feito: true, feitoEm: new Date().toISOString() },
+      data: { feito: true, feitoEm: new Date().toISOString(), naoAtendido: false, naoAtendidoEm: null },
       overrideAccess: true,
       req,
     })

@@ -1,7 +1,7 @@
 'use client'
 
 import { toast, useConfig } from '@payloadcms/ui'
-import { CheckCircle2, Circle, Mail, MapPin, MessageCircle, Phone, X } from 'lucide-react'
+import { CheckCircle2, Circle, CircleSlash, Mail, MapPin, MessageCircle, Phone, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 
@@ -21,6 +21,7 @@ export type ItemDoDia = {
   retornarEm: string | null
   origem: string
   feito: boolean
+  naoAtendido: boolean
 }
 
 const CANAIS = [
@@ -57,6 +58,7 @@ export function ListaDoDia({
   } = useConfig()
   const router = useRouter()
   const feitos = itens.filter((i) => i.feito).length
+  const naoAtendidos = itens.filter((i) => i.naoAtendido).length
   const alvo = Math.max(meta, itens.length)
   const pct = alvo ? Math.round((feitos / alvo) * 100) : 0
 
@@ -73,6 +75,7 @@ export function ListaDoDia({
         <h2>{titulo(dia, hoje)}</h2>
         <span className="meudia__progresso">
           <strong>{feitos}</strong> de {alvo} feita(s)
+          {naoAtendidos > 0 && <em className="meudia__nao-atendidas">{naoAtendidos} não atendida(s)</em>}
           <span className="meudia__barra" aria-hidden>
             <span style={{ width: `${pct}%` }} />
           </span>
@@ -87,9 +90,21 @@ export function ListaDoDia({
       ) : (
         <ul className="meudia__itens">
           {itens.map((i) => (
-            <li key={i.id} className={`meudia__item${i.feito ? ' meudia__item--feito' : ''}`}>
-              <span className="meudia__check" title={i.feito ? 'Feito: tentativa registrada' : 'Pendente'}>
-                {i.feito ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+            <li
+              key={i.id}
+              className={`meudia__item${i.feito ? ' meudia__item--feito' : ''}${i.naoAtendido ? ' meudia__item--nao-atendido' : ''}`}
+            >
+              <span
+                className="meudia__check"
+                title={
+                  i.feito
+                    ? 'Feito: tentativa registrada'
+                    : i.naoAtendido
+                      ? 'Não atendida: o dia passou sem tentativa de contato. Saiu da agenda e ficou só como registro.'
+                      : 'Pendente'
+                }
+              >
+                {i.feito ? <CheckCircle2 size={18} /> : i.naoAtendido ? <CircleSlash size={18} /> : <Circle size={18} />}
               </span>
               <a className="meudia__item-nome" href={`${adminRoute}/collections/crm-empresas/${i.empresaId}`}>
                 <strong>{i.nome}</strong>
@@ -101,6 +116,7 @@ export function ListaDoDia({
                   )}
                   {i.prioridade && <em>Prioridade {PRIORIDADE[i.prioridade] ?? i.prioridade}</em>}
                   {i.origem === 'manual' && <em>marcada por você</em>}
+                  {i.naoAtendido && <em className="meudia__tag-nao-atendida">não atendida</em>}
                 </span>
               </a>
               <span className="crm-cel-canais">
@@ -126,7 +142,8 @@ export function ListaDoDia({
         </ul>
       )}
       <p className="meudia__dica">
-        A empresa fica como feita sozinha quando você registra uma tentativa de contato na ficha dela.
+        A empresa fica como feita sozinha quando você registra uma tentativa de contato na ficha dela. Na virada do dia,
+        o que ficou sem contato sai da agenda como “não atendida” (fica só o registro para as métricas).
       </p>
     </section>
   )

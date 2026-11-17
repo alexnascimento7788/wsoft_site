@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Shuffle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 
-export type MarcaDia = { total: number; feitos: number }
+export type MarcaDia = { total: number; feitos: number; naoAtendidos: number }
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
 const SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -107,12 +107,22 @@ export function Planejador({
                 type="button"
                 className={classes}
                 onClick={() => irPara(d)}
-                title={marca ? `${marca.feitos} de ${marca.total} feita(s)` : undefined}
+                title={
+                  marca
+                    ? `${marca.feitos} de ${marca.total} feita(s)${marca.naoAtendidos ? ` · ${marca.naoAtendidos} não atendida(s)` : ''}`
+                    : undefined
+                }
               >
                 {Number(d.slice(8))}
                 {marca && (
                   <span
-                    className={`meudia__cal-marca${marca.feitos >= marca.total ? ' meudia__cal-marca--ok' : ''}`}
+                    className={`meudia__cal-marca${
+                      marca.feitos >= marca.total
+                        ? ' meudia__cal-marca--ok'
+                        : marca.naoAtendidos > 0
+                          ? ' meudia__cal-marca--falta'
+                          : ''
+                    }`}
                     aria-hidden
                   />
                 )}

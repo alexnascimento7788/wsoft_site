@@ -34,7 +34,9 @@ export const Dias: CollectionConfig = {
 }
 
 // Empresas do dia de cada vendedor. "Feito" é marcado sozinho quando o vendedor registra
-// uma tentativa de contato com a empresa naquele dia.
+// uma tentativa de contato com a empresa naquele dia. Na virada do dia, o banco (função
+// crm_virada_do_dia, agendada no pg_cron) marca as que ficaram sem atendimento como "não atendida":
+// saem da agenda e ficam só como registro para as métricas do vendedor.
 export const DiaItens: CollectionConfig = {
   slug: 'crm-dia-itens',
   labels: { singular: 'Empresa do dia', plural: 'Meu dia — empresas' },
@@ -61,6 +63,20 @@ export const DiaItens: CollectionConfig = {
     },
     { name: 'feito', label: 'Feito', type: 'checkbox', defaultValue: false, index: true },
     { name: 'feitoEm', label: 'Feito em', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
+    {
+      name: 'naoAtendido',
+      label: 'Não atendida (o dia passou sem contato)',
+      type: 'checkbox',
+      defaultValue: false,
+      index: true,
+      admin: { readOnly: true },
+    },
+    {
+      name: 'naoAtendidoEm',
+      label: 'Marcada como não atendida em',
+      type: 'date',
+      admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } },
+    },
   ],
   timestamps: true,
 }

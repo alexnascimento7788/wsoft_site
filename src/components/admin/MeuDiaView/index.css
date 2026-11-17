@@ -295,7 +295,7 @@ html[data-theme='dark'] .meudia {
 
 .meudia__kpis {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 14px;
 }
@@ -468,4 +468,37 @@ html[data-theme='dark'] .meudia {
   text-align: left;
   padding: 4px 6px;
   border-bottom: 1px solid var(--theme-elevation-50);
+}
+
+@media (min-width: 701px) and (max-width: 1100px) {
+  .meudia__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.meudia__kpi .meudia__kpi-nota {
+  font-size: 11px;
+  color: var(--theme-elevation-500);
+}
+
+.meudia__cal-marca--falta {
+  background: #f4791f;
+}
+
+.meudia__nao-atendidas {
+  font-style: normal;
+  font-size: 11px;
+  color: #c2410c;
+}
+
+.meudia__item--nao-atendido .meudia__check {
+  color: #f4791f;
+}
+
+.meudia__item--nao-atendido .meudia__item-nome strong {
+  color: var(--theme-elevation-500);
+}
+
+.meudia__tag-nao-atendida {
+  color: #c2410c;
 }

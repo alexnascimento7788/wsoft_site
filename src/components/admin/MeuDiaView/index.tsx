@@ -15,6 +15,10 @@ import '../CrmView/index.css'
 import './index.css'
 
 const idDe = (v: unknown) => (v && typeof v === 'object' ? (v as { id: number }).id : (v as number))
+// Não atendida: o banco marca na virada do dia; dia passado sem contato já conta assim mesmo
+// se a virada ainda não rodou
+const naoAtendida = (i: { feito?: boolean | null; naoAtendido?: boolean | null; dia: string }, diaHoje: string) =>
+  !i.feito && (Boolean(i.naoAtendido) || i.dia < diaHoje)
 const DIAS_INDICADOR = 30
 
 // Meu dia (/admin/crm/meu-dia): o vendedor escolhe o dia no calendário e quantas empresas quer
@@ -101,6 +105,7 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
       retornarEm: e?.retornarEm ?? null,
       origem: i.origem ?? 'sorteio',
       feito: Boolean(i.feito),
+      naoAtendido: naoAtendida(i, diaHoje),
     }
   })
 
@@ -121,19 +126,20 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
     where: { and: [{ usuario: { equals: alvoId } }, { dia: { greater_than_equal: inicioCal } }, { dia: { less_than: fimCal } }] },
     depth: 0,
     pagination: false,
-    select: { dia: true, feito: true },
+    select: { dia: true, feito: true, naoAtendido: true },
     ...ver,
   })
   const marcas: Record<string, MarcaDia> = {}
   for (const i of itensCal) {
-    const m = (marcas[i.dia] ??= { total: 0, feitos: 0 })
+    const m = (marcas[i.dia] ??= { total: 0, feitos: 0, naoAtendidos: 0 })
     m.total++
     if (i.feito) m.feitos++
+    else if (naoAtendida(i, diaHoje)) m.naoAtendidos++
   }
 
   // Indicador meta x feito: últimos 30 dias até hoje
   const inicioInd = somarDias(diaHoje, -(DIAS_INDICADOR - 1))
-  const [{ docs: diasInd }, { docs: registros }] = await Promise.all([
+  const [{ docs: diasInd }, { docs: registros }, { docs: agendaInd }] = await Promise.all([
     payload.find({
       collection: 'crm-dias',
       where: { and: [{ usuario: { equals: alvoId } }, { dia: { greater_than_equal: inicioInd } }, { dia: { less_than_equal: diaHoje } }] },
@@ -153,7 +159,18 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
       populate: { 'crm-empresas': { razaoSocial: true, nomeFantasia: true } },
       ...ver,
     }),
+    // Agenda dos últimos 30 dias até ontem: prospectadas (feitas) x não atendidas
+    payload.find({
+      collection: 'crm-dia-itens',
+      where: { and: [{ usuario: { equals: alvoId } }, { dia: { greater_than_equal: inicioInd } }, { dia: { less_than: diaHoje } }] },
+      depth: 0,
+      pagination: false,
+      select: { dia: true, feito: true, naoAtendido: true },
+      ...ver,
+    }),
   ])
+  const agendadasPassadas = agendaInd.length
+  const naoAtendidas = agendaInd.filter((i) => naoAtendida(i, diaHoje)).length
   const metas: Record<string, number> = Object.fromEntries(diasInd.map((d) => [d.dia, d.meta ?? 0]))
   const empresasPorDia: Record<string, Map<number, string>> = {}
   for (const r of registros) {
@@ -239,6 +256,19 @@ export default async function MeuDiaView({ initPageResult, params, searchParams 
             {totalMeta > 0 && (
               <span className="meudia__kpi-barra" aria-hidden>
                 <span style={{ width: `${Math.min(100, Math.round((totalFeito / totalMeta) * 100))}%` }} />
+              </span>
+            )}
+          </div>
+          <div
+            className="meudia__kpi"
+            style={{ '--cor': '#F4791F' } as React.CSSProperties}
+            title="Empresas que estavam na agenda de um dia que já passou e ficaram sem nenhuma tentativa de contato. Na virada do dia elas saem da agenda e voltam a poder ser sorteadas."
+          >
+            <span>Agendadas e não atendidas</span>
+            <strong>{naoAtendidas}</strong>
+            {agendadasPassadas > 0 && (
+              <span className="meudia__kpi-nota">
+                {agendadasPassadas - naoAtendidas} prospectada(s) de {agendadasPassadas} agendada(s) até ontem
               </span>
             )}
           </div>

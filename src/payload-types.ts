@@ -727,6 +727,8 @@ export interface CrmDiaIten {
   origem?: ('sorteio' | 'manual') | null;
   feito?: boolean | null;
   feitoEm?: string | null;
+  naoAtendido?: boolean | null;
+  naoAtendidoEm?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1349,6 +1351,8 @@ export interface CrmDiaItensSelect<T extends boolean = true> {
   origem?: T;
   feito?: T;
   feitoEm?: T;
+  naoAtendido?: T;
+  naoAtendidoEm?: T;
   updatedAt?: T;
   createdAt?: T;
 }
