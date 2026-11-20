@@ -22,6 +22,7 @@ import { Fornecedores } from './collections/Orcamento/Fornecedores'
 import { Products } from './collections/Products'
 import { Users } from './collections/Users'
 import { ConfiguracaoOrcamento } from './globals/ConfiguracaoOrcamento'
+import { CrmAutomacao } from './globals/CrmAutomacao'
 import { CrmConfiguracao } from './globals/CrmConfiguracao'
 import { SiteSettings } from './globals/SiteSettings'
 import { plugins } from './plugins'
@@ -121,7 +122,7 @@ export default buildConfig({
     Users,
   ],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [ConfiguracaoOrcamento, CrmConfiguracao, SiteSettings],
+  globals: [ConfiguracaoOrcamento, CrmConfiguracao, CrmAutomacao, SiteSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',
   sharp,

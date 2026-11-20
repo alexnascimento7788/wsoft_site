@@ -3,6 +3,7 @@
 import { Link } from '@payloadcms/ui'
 import {
   BadgeCheck,
+  Bot,
   Building2,
   CalendarDays,
   ChartColumn,
@@ -36,6 +37,7 @@ import './Menu.css'
 
 const ICONES: Record<string, LucideIcon> = {
   badge: BadgeCheck,
+  bot: Bot,
   building: Building2,
   calendar: CalendarDays,
   chart: ChartColumn,

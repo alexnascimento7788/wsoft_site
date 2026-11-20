@@ -17,7 +17,7 @@ describe('menu do admin', () => {
       (e) => !e.admin?.group && !e.slug.startsWith('payload-'),
     )
     expect(semGrupo.map((e) => e.slug)).toEqual([])
-  })
+  }, 20_000) // carregar a configuração inteira passa de 5 s em máquina mais lenta
 
   it('/orcamento leva ao painel do orçamento', async () => {
     const lista = await redirects!()

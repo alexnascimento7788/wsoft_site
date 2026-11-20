@@ -72,6 +72,7 @@ export const AREAS: AreaMenu[] = [
           { tipo: 'colecao', slug: 'crm-modelos-importacao', icone: 'columns' },
           { tipo: 'colecao', slug: 'crm-auditoria', icone: 'eye' },
           { tipo: 'global', slug: 'crm-configuracao', icone: 'settings' },
+          { tipo: 'global', slug: 'crm-automacao', icone: 'bot' },
         ],
       },
     ],

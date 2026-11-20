@@ -133,11 +133,13 @@ export interface Config {
   globals: {
     'configuracao-orcamento': ConfiguracaoOrcamento;
     'crm-configuracao': CrmConfiguracao;
+    'crm-automacao': CrmAutomacao;
     'site-settings': SiteSetting;
   };
   globalsSelect: {
     'configuracao-orcamento': ConfiguracaoOrcamentoSelect<false> | ConfiguracaoOrcamentoSelect<true>;
     'crm-configuracao': CrmConfiguracaoSelect<false> | CrmConfiguracaoSelect<true>;
+    'crm-automacao': CrmAutomacaoSelect<false> | CrmAutomacaoSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
   };
   locale: null;
@@ -1673,6 +1675,81 @@ export interface CrmConfiguracao {
   createdAt?: string | null;
 }
 /**
+ * Conexões do agente de prospecção: inteligência artificial, WhatsApp e e-mail, e os limites do início controlado. Salve antes de testar.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-automacao".
+ */
+export interface CrmAutomacao {
+  id: number;
+  /**
+   * Crie em console.anthropic.com → API Keys. Guardada criptografada.
+   */
+  iaToken?: string | null;
+  iaModelo?: ('claude-opus-5-5' | 'claude-sonnet-5-5' | 'claude-haiku-5-5') | null;
+  /**
+   * Os modelos atuais do Claude não aceitam mais “temperatura”. O tom e a criatividade são controlados pelo prompt abaixo; o esforço controla o quanto ele pensa antes de responder.
+   */
+  iaEsforco?: ('low' | 'medium' | 'high') | null;
+  /**
+   * Quem é o agente, o que ele pode e o que não pode fazer. Os textos prontos do CRM continuam valendo para o 1º contato.
+   */
+  iaPrompt?: string | null;
+  waProvedor?: ('evolution' | 'meta') | null;
+  evoUrl?: string | null;
+  /**
+   * Como aparece no painel da Evolution.
+   */
+  evoInstancia?: string | null;
+  /**
+   * A apikey global ou a da instância (painel da Evolution). Guardada criptografada.
+   */
+  evoApiKey?: string | null;
+  metaPhoneNumberId?: string | null;
+  metaWabaId?: string | null;
+  /**
+   * Do usuário do sistema no Business Manager. Guardado criptografado.
+   */
+  metaToken?: string | null;
+  /**
+   * Confere a assinatura das mensagens recebidas. Guardado criptografado.
+   */
+  metaAppSecret?: string | null;
+  emailRemetenteNome?: string | null;
+  emailRemetente?: string | null;
+  smtpHost?: string | null;
+  smtpPorta?: number | null;
+  /**
+   * Deixe desmarcado para a porta 587 (STARTTLS).
+   */
+  smtpSeguro?: boolean | null;
+  smtpUsuario?: string | null;
+  /**
+   * Se o provedor pedir, use uma “senha de app”. Guardada criptografada.
+   */
+  smtpSenha?: string | null;
+  imapHost?: string | null;
+  imapPorta?: number | null;
+  /**
+   * Desligada: nenhum agente ou chatbot envia nada, mesmo com o interruptor do vendedor ligado. Use para parar tudo de uma vez.
+   */
+  automacaoLiberada?: boolean | null;
+  waLimiteInicial?: number | null;
+  waAumentoDiario?: number | null;
+  waLimiteMaximo?: number | null;
+  emailLimiteDia?: number | null;
+  intervaloMinSeg?: number | null;
+  intervaloMaxSeg?: number | null;
+  horaInicio?: string | null;
+  horaFim?: string | null;
+  /**
+   * Horário de Brasília.
+   */
+  diasSemana?: ('seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom')[] | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings".
  */
@@ -1746,6 +1823,46 @@ export interface CrmConfiguracaoSelect<T extends boolean = true> {
   encarregadoNome?: T;
   canalTitular?: T;
   avisoPrivacidade?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crm-automacao_select".
+ */
+export interface CrmAutomacaoSelect<T extends boolean = true> {
+  iaToken?: T;
+  iaModelo?: T;
+  iaEsforco?: T;
+  iaPrompt?: T;
+  waProvedor?: T;
+  evoUrl?: T;
+  evoInstancia?: T;
+  evoApiKey?: T;
+  metaPhoneNumberId?: T;
+  metaWabaId?: T;
+  metaToken?: T;
+  metaAppSecret?: T;
+  emailRemetenteNome?: T;
+  emailRemetente?: T;
+  smtpHost?: T;
+  smtpPorta?: T;
+  smtpSeguro?: T;
+  smtpUsuario?: T;
+  smtpSenha?: T;
+  imapHost?: T;
+  imapPorta?: T;
+  automacaoLiberada?: T;
+  waLimiteInicial?: T;
+  waAumentoDiario?: T;
+  waLimiteMaximo?: T;
+  emailLimiteDia?: T;
+  intervaloMinSeg?: T;
+  intervaloMaxSeg?: T;
+  horaInicio?: T;
+  horaFim?: T;
+  diasSemana?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
