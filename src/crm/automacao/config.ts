@@ -5,7 +5,9 @@ import { descriptografar, estaCriptografado } from './segredos'
 const CAMPOS_SEGREDO = ['iaToken', 'evoApiKey', 'metaToken', 'metaAppSecret', 'smtpSenha'] as const
 
 export type ConfigAutomacao = {
+  iaProvedor?: 'anthropic' | 'openai' | 'gemini' | 'deepseek' | null
   iaToken?: string | null
+  iaTemperatura?: number | null
   iaModelo?: string | null
   iaEsforco?: 'low' | 'medium' | 'high' | null
   iaPrompt?: string | null

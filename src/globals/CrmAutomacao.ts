@@ -2,7 +2,7 @@ import type { Field, FieldHook, GlobalConfig, PayloadRequest, TextField } from '
 
 import { hideFromNonCrmAdmins, isCrmAdmin } from '../access/roles'
 import { testarAutomacao } from '../crm/automacao/endpoints'
-import { MODELOS_IA, PROMPT_PADRAO } from '../crm/automacao/padroes'
+import { PROMPT_PADRAO, PROVEDORES_IA } from '../crm/automacao/padroes'
 import { criptografar, ehMascara, estaCriptografado, mascarar } from '../crm/automacao/segredos'
 
 export const SLUG_AUTOMACAO = 'crm-automacao'
@@ -90,22 +90,50 @@ export const CrmAutomacao: GlobalConfig = {
           description: 'Usada pelo modo Agente IA. O modo Chatbot (fluxos) não usa IA.',
           fields: [
             {
+              name: 'iaProvedor',
+              label: 'Provedor de IA',
+              type: 'radio',
+              defaultValue: 'anthropic',
+              options: PROVEDORES_IA.map(({ value, label }) => ({ value, label })),
+              admin: { layout: 'horizontal' },
+            },
+            {
               type: 'row',
               fields: [
-                segredo('iaToken', 'Chave da API (Anthropic / Claude)', 'Crie em console.anthropic.com → API Keys. Guardada criptografada.'),
+                segredo(
+                  'iaToken',
+                  'Chave da API',
+                  'Do provedor escolhido acima (Claude: console.anthropic.com · ChatGPT: platform.openai.com · Gemini: aistudio.google.com · DeepSeek: platform.deepseek.com). Guardada criptografada.',
+                ),
                 {
                   name: 'iaModelo',
                   label: 'Modelo',
-                  type: 'select',
-                  defaultValue: MODELOS_IA[0].value,
-                  options: MODELOS_IA.map(({ value, label }) => ({ value, label })),
-                  admin: { width: '50%' },
+                  type: 'text',
+                  defaultValue: 'claude-opus-5-5',
+                  admin: {
+                    width: '50%',
+                    description:
+                      'Nome exato do modelo, como aparece no painel do provedor. Exemplos: Claude: claude-opus-5-5, claude-sonnet-5-5, claude-haiku-5-5 · ChatGPT: gpt-5, gpt-5-mini · Gemini: gemini-2.5-flash · DeepSeek: deepseek-chat. O botão de teste confere se o modelo existe.',
+                  },
                 },
               ],
             },
             {
+              name: 'iaTemperatura',
+              label: 'Temperatura',
+              type: 'number',
+              defaultValue: 0.4,
+              min: 0,
+              max: 2,
+              admin: {
+                step: 0.1,
+                condition: (data) => data?.iaProvedor !== 'anthropic',
+                description: '0 = respostas mais previsíveis; 1 ou mais = mais criativas. Para prospecção, de 0,2 a 0,6.',
+              },
+            },
+            {
               name: 'iaEsforco',
-              label: 'Esforço (no lugar da temperatura)',
+              label: 'Esforço (o Claude não usa temperatura)',
               type: 'select',
               defaultValue: 'low',
               options: [
@@ -114,8 +142,9 @@ export const CrmAutomacao: GlobalConfig = {
                 { value: 'high', label: 'Alto: pensa mais antes de responder (mais caro e lento)' },
               ],
               admin: {
+                condition: (data) => !data?.iaProvedor || data?.iaProvedor === 'anthropic',
                 description:
-                  'Os modelos atuais do Claude não aceitam mais “temperatura”. O tom e a criatividade são controlados pelo prompt abaixo; o esforço controla o quanto ele pensa antes de responder.',
+                  'Os modelos atuais do Claude não aceitam temperatura. O tom vem do prompt abaixo; o esforço controla o quanto ele pensa antes de responder.',
               },
             },
             {

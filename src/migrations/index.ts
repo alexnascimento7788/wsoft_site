@@ -9,6 +9,7 @@ import * as migration_20261111_211329_crm_aguardando_retorno from './20261111_21
 import * as migration_20261111_235906_crm_canal_ruim from './20261111_235906_crm_canal_ruim';
 import * as migration_20261117_114045_crm_virada_do_dia from './20261117_114045_crm_virada_do_dia';
 import * as migration_20261120_200453_crm_automacao from './20261120_200453_crm_automacao';
+import * as migration_20261121_003405_crm_automacao_provedores from './20261121_003405_crm_automacao_provedores';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20261120_200453_crm_automacao.up,
     down: migration_20261120_200453_crm_automacao.down,
-    name: '20261120_200453_crm_automacao'
+    name: '20261120_200453_crm_automacao',
+  },
+  {
+    up: migration_20261121_003405_crm_automacao_provedores.up,
+    down: migration_20261121_003405_crm_automacao_provedores.down,
+    name: '20261121_003405_crm_automacao_provedores'
   },
 ];

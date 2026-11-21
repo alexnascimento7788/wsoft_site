@@ -1,10 +1,13 @@
 // Valores iniciais da Automação (editáveis na tela Automação → Inteligência artificial)
 
-export const MODELOS_IA = [
-  { value: 'claude-opus-5-5', label: 'Claude Opus 5.5: o mais capaz (US$ 4 / 20 por milhão de tokens)' },
-  { value: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5: equilíbrio (US$ 2 / 10 por milhão de tokens)' },
-  { value: 'claude-haiku-5-5', label: 'Claude Haiku 5.5: o mais barato (US$ 0,10 / 0,50 por milhão de tokens)' },
+export const PROVEDORES_IA = [
+  { value: 'anthropic', label: 'Claude (Anthropic)' },
+  { value: 'openai', label: 'ChatGPT (OpenAI)' },
+  { value: 'gemini', label: 'Gemini (Google)' },
+  { value: 'deepseek', label: 'DeepSeek' },
 ] as const
+
+export type ProvedorIA = (typeof PROVEDORES_IA)[number]['value']
 
 export const PROMPT_PADRAO = `Você é o assistente de prospecção da Wsoft Informática. A Wsoft vende o SiagWeb, sistema de gestão para silos, armazéns, cerealistas, cooperativas e comércio de grãos.
 

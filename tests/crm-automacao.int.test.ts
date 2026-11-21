@@ -102,6 +102,18 @@ describe.skipIf(!local)('CRM — Automação: segredos criptografados e acesso',
     expect(cfg.evoInstancia).toBe('outra')
   })
 
+  it('provedor e modelo: ChatGPT com modelo em texto livre e temperatura', async () => {
+    await payload.updateGlobal({
+      slug: 'crm-automacao',
+      data: { iaProvedor: 'openai', iaModelo: 'gpt-qualquer-modelo', iaTemperatura: 0.3 },
+      ...como(u.crmAdmin),
+    })
+    const { lerAutomacao } = await import('@/crm/automacao/config')
+    const cfg = await lerAutomacao(payload)
+    expect(cfg).toMatchObject({ iaProvedor: 'openai', iaModelo: 'gpt-qualquer-modelo', iaTemperatura: 0.3 })
+    expect(cfg.iaToken).toBe('sk-ant-api-token-ABCD') // trocar o provedor não apaga a chave salva
+  })
+
   it('tabelas da Automação fora da API REST do Supabase', async () => {
     const rows = (
       await pool.query(`SELECT c.relname, c.relrowsecurity AS rls,

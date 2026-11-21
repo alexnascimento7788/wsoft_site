@@ -1682,13 +1682,21 @@ export interface CrmConfiguracao {
  */
 export interface CrmAutomacao {
   id: number;
+  iaProvedor?: ('anthropic' | 'openai' | 'gemini' | 'deepseek') | null;
   /**
-   * Crie em console.anthropic.com → API Keys. Guardada criptografada.
+   * Do provedor escolhido acima (Claude: console.anthropic.com · ChatGPT: platform.openai.com · Gemini: aistudio.google.com · DeepSeek: platform.deepseek.com). Guardada criptografada.
    */
   iaToken?: string | null;
-  iaModelo?: ('claude-opus-5-5' | 'claude-sonnet-5-5' | 'claude-haiku-5-5') | null;
   /**
-   * Os modelos atuais do Claude não aceitam mais “temperatura”. O tom e a criatividade são controlados pelo prompt abaixo; o esforço controla o quanto ele pensa antes de responder.
+   * Nome exato do modelo, como aparece no painel do provedor. Exemplos: Claude: claude-opus-5-5, claude-sonnet-5-5, claude-haiku-5-5 · ChatGPT: gpt-5, gpt-5-mini · Gemini: gemini-2.5-flash · DeepSeek: deepseek-chat. O botão de teste confere se o modelo existe.
+   */
+  iaModelo?: string | null;
+  /**
+   * 0 = respostas mais previsíveis; 1 ou mais = mais criativas. Para prospecção, de 0,2 a 0,6.
+   */
+  iaTemperatura?: number | null;
+  /**
+   * Os modelos atuais do Claude não aceitam temperatura. O tom vem do prompt abaixo; o esforço controla o quanto ele pensa antes de responder.
    */
   iaEsforco?: ('low' | 'medium' | 'high') | null;
   /**
@@ -1832,8 +1840,10 @@ export interface CrmConfiguracaoSelect<T extends boolean = true> {
  * via the `definition` "crm-automacao_select".
  */
 export interface CrmAutomacaoSelect<T extends boolean = true> {
+  iaProvedor?: T;
   iaToken?: T;
   iaModelo?: T;
+  iaTemperatura?: T;
   iaEsforco?: T;
   iaPrompt?: T;
   waProvedor?: T;
