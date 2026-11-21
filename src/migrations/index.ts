@@ -10,6 +10,7 @@ import * as migration_20261111_235906_crm_canal_ruim from './20261111_235906_crm
 import * as migration_20261117_114045_crm_virada_do_dia from './20261117_114045_crm_virada_do_dia';
 import * as migration_20261120_200453_crm_automacao from './20261120_200453_crm_automacao';
 import * as migration_20261121_003405_crm_automacao_provedores from './20261121_003405_crm_automacao_provedores';
+import * as migration_20261121_005308_crm_email_vendedor_catalogo from './20261121_005308_crm_email_vendedor_catalogo';
 
 export const migrations = [
   {
@@ -70,6 +71,11 @@ export const migrations = [
   {
     up: migration_20261121_003405_crm_automacao_provedores.up,
     down: migration_20261121_003405_crm_automacao_provedores.down,
-    name: '20261121_003405_crm_automacao_provedores'
+    name: '20261121_003405_crm_automacao_provedores',
+  },
+  {
+    up: migration_20261121_005308_crm_email_vendedor_catalogo.up,
+    down: migration_20261121_005308_crm_email_vendedor_catalogo.down,
+    name: '20261121_005308_crm_email_vendedor_catalogo'
   },
 ];

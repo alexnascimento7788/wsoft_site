@@ -1,59 +1,25 @@
-import type { Field, FieldHook, GlobalConfig, PayloadRequest, TextField } from 'payload'
+import type { Field, GlobalConfig, PayloadRequest, TextField } from 'payload'
 
 import { hideFromNonCrmAdmins, isCrmAdmin } from '../access/roles'
 import { testarAutomacao } from '../crm/automacao/endpoints'
 import { PROMPT_PADRAO, PROVEDORES_IA } from '../crm/automacao/padroes'
-import { criptografar, ehMascara, estaCriptografado, mascarar } from '../crm/automacao/segredos'
+import { campoSegredo } from '../crm/automacao/campoSegredo'
 
 export const SLUG_AUTOMACAO = 'crm-automacao'
 
-// Valores brutos (criptografados) já salvos — lidos uma vez por requisição, para manter
-// o segredo quando a tela devolve a máscara no salvar
-async function salvosBrutos(req: PayloadRequest): Promise<Record<string, unknown>> {
-  const ctx = req.context as { __automacaoBruta?: Record<string, unknown> }
-  if (!ctx.__automacaoBruta) {
-    ctx.__automacaoBruta = (await req.payload.findGlobal({
-      slug: SLUG_AUTOMACAO,
-      depth: 0,
-      overrideAccess: true,
-      context: { segredos: true },
-    })) as unknown as Record<string, unknown>
-  }
-  return ctx.__automacaoBruta
-}
+// Lê a Automação com os segredos ainda criptografados (para manter o valor quando volta a máscara)
+const carregarAutomacao = async (req: PayloadRequest) =>
+  (await req.payload.findGlobal({
+    slug: SLUG_AUTOMACAO,
+    depth: 0,
+    overrideAccess: true,
+    context: { segredos: true },
+  })) as unknown as Record<string, unknown>
 
-const guardarSegredo =
-  (name: string): FieldHook =>
-  async ({ value, req }) => {
-    // Não mexeu (voltou a máscara) ou não veio: mantém o que está salvo
-    if (value === undefined || ehMascara(value)) {
-      const atual = (await salvosBrutos(req))[name]
-      return estaCriptografado(atual) ? atual : null
-    }
-    if (value === null || (typeof value === 'string' && value.trim() === '')) return null
-    if (estaCriptografado(value)) return value
-    return criptografar(String(value).trim())
-  }
+const segredo = (name: string, label: string, description?: string): TextField =>
+  campoSegredo({ name, label, description, chave: SLUG_AUTOMACAO, carregar: carregarAutomacao })
 
-// Na tela o segredo aparece mascarado; só o código do servidor (context.segredos) lê o valor
-const mostrarSegredo: FieldHook = ({ value, context }) => {
-  if ((context as { segredos?: boolean })?.segredos) return value
-  return typeof value === 'string' && value ? mascarar(value) : value
-}
-
-const segredo = (name: string, label: string, description?: string, width = '50%'): TextField => ({
-  name,
-  label,
-  type: 'text',
-  admin: {
-    width,
-    description: description ?? 'Guardado criptografado. Para trocar, apague e cole o novo; para remover, deixe vazio.',
-    autoComplete: 'off',
-  },
-  hooks: { beforeChange: [guardarSegredo(name)], afterRead: [mostrarSegredo] },
-})
-
-const testar = (alvo: 'ia' | 'whatsapp' | 'email'): Field => ({
+const testar = (alvo: 'ia' | 'whatsapp'): Field => ({
   name: `testar_${alvo}`,
   type: 'ui',
   admin: {
@@ -78,7 +44,7 @@ export const CrmAutomacao: GlobalConfig = {
     group: 'CRM',
     hidden: hideFromNonCrmAdmins,
     description:
-      'Conexões do agente de prospecção: inteligência artificial, WhatsApp e e-mail, e os limites do início controlado. Salve antes de testar.',
+      'Conexões do agente de prospecção: inteligência artificial, WhatsApp, catálogo e os limites do início controlado. O e-mail é de cada vendedor (Usuários → Minha caixa de e-mail). Salve antes de testar.',
   },
   endpoints: [testarAutomacao],
   fields: [
@@ -222,56 +188,25 @@ export const CrmAutomacao: GlobalConfig = {
           ],
         },
         {
-          label: 'E-mail',
+          label: 'Catálogo',
+          description:
+            'Material que o chatbot e o agente enviam quando o cliente pede (ou quando o fluxo chega nessa parte). O e-mail de cada vendedor fica no cadastro do próprio usuário.',
           fields: [
             {
-              type: 'row',
-              fields: [
-                { name: 'emailRemetenteNome', label: 'Nome do remetente', type: 'text', admin: { width: '50%', placeholder: 'Fulano — Wsoft' } },
-                { name: 'emailRemetente', label: 'E-mail do remetente', type: 'email', admin: { width: '50%' } },
-              ],
+              name: 'catalogo',
+              label: 'Catálogo da Wsoft (PDF)',
+              type: 'upload',
+              relationTo: 'media',
+              filterOptions: { mimeType: { equals: 'application/pdf' } },
+              admin: { description: 'Envie o PDF aqui. Ele fica num endereço público, porque é mandado para os clientes.' },
             },
             {
-              type: 'collapsible',
-              label: 'Envio (SMTP)',
-              fields: [
-                {
-                  type: 'row',
-                  fields: [
-                    { name: 'smtpHost', label: 'Servidor', type: 'text', admin: { width: '40%', placeholder: 'smtp.seuprovedor.com.br' } },
-                    { name: 'smtpPorta', label: 'Porta', type: 'number', defaultValue: 587, admin: { width: '20%' } },
-                    {
-                      name: 'smtpSeguro',
-                      label: 'SSL direto (porta 465)',
-                      type: 'checkbox',
-                      admin: { width: '40%', description: 'Deixe desmarcado para a porta 587 (STARTTLS).' },
-                    },
-                  ],
-                },
-                {
-                  type: 'row',
-                  fields: [
-                    { name: 'smtpUsuario', label: 'Usuário', type: 'text', admin: { width: '50%' } },
-                    segredo('smtpSenha', 'Senha', 'Se o provedor pedir, use uma “senha de app”. Guardada criptografada.'),
-                  ],
-                },
-              ],
+              name: 'catalogoMensagem',
+              label: 'Mensagem que acompanha o catálogo',
+              type: 'textarea',
+              defaultValue: () => 'Segue o catálogo do SiagWeb, o sistema da Wsoft para gestão de silos e armazéns. Se quiser, marcamos uma demonstração rápida.',
+              admin: { rows: 3 },
             },
-            {
-              type: 'collapsible',
-              label: 'Recebimento das respostas (IMAP)',
-              admin: { description: 'Usado na Etapa 3 para trazer as respostas para o histórico. Usa o mesmo usuário e senha do SMTP.' },
-              fields: [
-                {
-                  type: 'row',
-                  fields: [
-                    { name: 'imapHost', label: 'Servidor', type: 'text', admin: { width: '60%', placeholder: 'imap.seuprovedor.com.br' } },
-                    { name: 'imapPorta', label: 'Porta', type: 'number', defaultValue: 993, admin: { width: '40%' } },
-                  ],
-                },
-              ],
-            },
-            testar('email'),
           ],
         },
         {
@@ -326,7 +261,7 @@ export const CrmAutomacao: GlobalConfig = {
               fields: [
                 {
                   name: 'emailLimiteDia',
-                  label: 'E-mail: envios por dia',
+                  label: 'E-mail: envios por dia (cada vendedor)',
                   type: 'number',
                   defaultValue: 40,
                   min: 1,

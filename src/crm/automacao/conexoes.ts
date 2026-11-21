@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import nodemailer from 'nodemailer'
 
-import type { ConfigAutomacao } from './config'
+import type { CaixaEmail, ConfigAutomacao } from './config'
 
 export type ResultadoTeste = { ok: boolean; mensagem: string }
 
@@ -139,11 +139,10 @@ async function meta(cfg: ConfigAutomacao): Promise<ResultadoTeste> {
 
 export const testarWhatsApp = (cfg: ConfigAutomacao) => (cfg.waProvedor === 'meta' ? meta(cfg) : evolution(cfg))
 
-// E-mail: abre a conexão SMTP e faz login (não envia nada)
-export async function testarEmail(cfg: ConfigAutomacao): Promise<ResultadoTeste> {
+// E-mail do vendedor: abre a conexão SMTP e faz login (não envia nada)
+export async function testarEmail(cfg: CaixaEmail): Promise<ResultadoTeste> {
   if (!cfg.smtpHost) return falta('o servidor SMTP')
   if (!cfg.smtpUsuario || !cfg.smtpSenha) return falta('o usuário e a senha do SMTP')
-  if (!cfg.emailRemetente) return falta('o e-mail do remetente')
   const transporte = nodemailer.createTransport({
     host: cfg.smtpHost,
     port: cfg.smtpPorta ?? 587,

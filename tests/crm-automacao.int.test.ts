@@ -34,7 +34,7 @@ describe.skipIf(!local)('CRM — Automação: segredos criptografados e acesso',
     const { migrations } = await import('@/migrations')
     await payload.db.migrate({ migrations: migrations as never })
 
-    for (const [k, roles] of Object.entries({ crmAdmin: ['crm_admin'], vend: ['vendedor'], fin: ['financeiro'] })) {
+    for (const [k, roles] of Object.entries({ crmAdmin: ['crm_admin'], vend: ['vendedor'], vend2: ['vendedor'], fin: ['financeiro'] })) {
       const doc = await payload.create({
         collection: 'users',
         data: { email: `${k}@teste.local`, password: 'senha-teste-123', name: k, roles } as never,
@@ -112,6 +112,40 @@ describe.skipIf(!local)('CRM — Automação: segredos criptografados e acesso',
     const cfg = await lerAutomacao(payload)
     expect(cfg).toMatchObject({ iaProvedor: 'openai', iaModelo: 'gpt-qualquer-modelo', iaTemperatura: 0.3 })
     expect(cfg.iaToken).toBe('sk-ant-api-token-ABCD') // trocar o provedor não apaga a chave salva
+  })
+
+  it('caixa de e-mail do vendedor: senha criptografada, só ele vê e o servidor abre', async () => {
+    await payload.update({
+      collection: 'users',
+      id: u.vend.id,
+      data: { smtpHost: 'smtp.teste.local', smtpUsuario: 'vend@teste.local', smtpSenha: 'senha-do-email-WXYZ' } as never,
+      ...como(u.vend),
+    })
+    const b = (await pool.query(`SELECT smtp_senha FROM users WHERE id = $1`, [u.vend.id])).rows[0]
+    expect(b.smtp_senha).toMatch(/^enc1:/)
+
+    const proprio = (await payload.findByID({ collection: 'users', id: u.vend.id, ...como(u.vend) })) as unknown as Record<string, unknown>
+    expect(proprio.smtpHost).toBe('smtp.teste.local')
+    expect(proprio.smtpSenha).toBe('••••••••WXYZ')
+
+    // O administrador do CRM enxerga a equipe, mas não a caixa de e-mail dos outros
+    const visto = (await payload.findByID({ collection: 'users', id: u.vend.id, ...como(u.crmAdmin) })) as unknown as Record<string, unknown>
+    expect(visto.email).toBe('vend@teste.local')
+    expect(visto.smtpHost).toBeUndefined()
+    expect(visto.smtpSenha).toBeUndefined()
+
+    // Salvar o próprio cadastro sem mexer na senha mantém a senha
+    await payload.update({ collection: 'users', id: u.vend.id, data: { ...proprio, name: 'Vendedor' } as never, ...como(u.vend) })
+    expect((await pool.query(`SELECT smtp_senha FROM users WHERE id = $1`, [u.vend.id])).rows[0].smtp_senha).toBe(b.smtp_senha)
+
+    // Outro vendedor não altera a caixa de ninguém
+    await expect(
+      payload.update({ collection: 'users', id: u.vend.id, data: { smtpHost: 'x' } as never, ...como(u.vend2) }),
+    ).rejects.toThrow()
+
+    const { lerCaixaEmail } = await import('@/crm/automacao/config')
+    const caixa = await lerCaixaEmail(payload, u.vend.id)
+    expect(caixa).toMatchObject({ smtpHost: 'smtp.teste.local', smtpSenha: 'senha-do-email-WXYZ' })
   })
 
   it('tabelas da Automação fora da API REST do Supabase', async () => {

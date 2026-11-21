@@ -194,7 +194,34 @@ export interface CentrosDeCusto {
 export interface User {
   id: number;
   name?: string | null;
+  /**
+   * Celular com DDD. Recebe pelo WhatsApp os avisos de "cliente para assumir".
+   */
   telefone?: string | null;
+  emailRemetenteNome?: string | null;
+  /**
+   * Vazio = usa o e-mail de login.
+   */
+  emailRemetente?: string | null;
+  smtpHost?: string | null;
+  smtpPorta?: number | null;
+  /**
+   * Deixe desmarcado para a porta 587 (STARTTLS).
+   */
+  smtpSeguro?: boolean | null;
+  /**
+   * Normalmente o próprio e-mail.
+   */
+  smtpUsuario?: string | null;
+  /**
+   * Se o provedor pedir, use uma “senha de app”. Guardada criptografada.
+   */
+  smtpSenha?: string | null;
+  /**
+   * Para trazer as respostas ao CRM. Usa o mesmo usuário e senha.
+   */
+  imapHost?: string | null;
+  imapPorta?: number | null;
   /**
    * Uma pessoa pode ter mais de um perfil (ex.: vendedor e apresentador).
    */
@@ -1539,6 +1566,15 @@ export interface MediaSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   telefone?: T;
+  emailRemetenteNome?: T;
+  emailRemetente?: T;
+  smtpHost?: T;
+  smtpPorta?: T;
+  smtpSeguro?: T;
+  smtpUsuario?: T;
+  smtpSenha?: T;
+  imapHost?: T;
+  imapPorta?: T;
   roles?: T;
   ativo?: T;
   role?: T;
@@ -1675,7 +1711,7 @@ export interface CrmConfiguracao {
   createdAt?: string | null;
 }
 /**
- * Conexões do agente de prospecção: inteligência artificial, WhatsApp e e-mail, e os limites do início controlado. Salve antes de testar.
+ * Conexões do agente de prospecção: inteligência artificial, WhatsApp, catálogo e os limites do início controlado. O e-mail é de cada vendedor (Usuários → Minha caixa de e-mail). Salve antes de testar.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "crm-automacao".
@@ -1723,21 +1759,11 @@ export interface CrmAutomacao {
    * Confere a assinatura das mensagens recebidas. Guardado criptografado.
    */
   metaAppSecret?: string | null;
-  emailRemetenteNome?: string | null;
-  emailRemetente?: string | null;
-  smtpHost?: string | null;
-  smtpPorta?: number | null;
   /**
-   * Deixe desmarcado para a porta 587 (STARTTLS).
+   * Envie o PDF aqui. Ele fica num endereço público, porque é mandado para os clientes.
    */
-  smtpSeguro?: boolean | null;
-  smtpUsuario?: string | null;
-  /**
-   * Se o provedor pedir, use uma “senha de app”. Guardada criptografada.
-   */
-  smtpSenha?: string | null;
-  imapHost?: string | null;
-  imapPorta?: number | null;
+  catalogo?: (number | null) | Media;
+  catalogoMensagem?: string | null;
   /**
    * Desligada: nenhum agente ou chatbot envia nada, mesmo com o interruptor do vendedor ligado. Use para parar tudo de uma vez.
    */
@@ -1854,15 +1880,8 @@ export interface CrmAutomacaoSelect<T extends boolean = true> {
   metaWabaId?: T;
   metaToken?: T;
   metaAppSecret?: T;
-  emailRemetenteNome?: T;
-  emailRemetente?: T;
-  smtpHost?: T;
-  smtpPorta?: T;
-  smtpSeguro?: T;
-  smtpUsuario?: T;
-  smtpSenha?: T;
-  imapHost?: T;
-  imapPorta?: T;
+  catalogo?: T;
+  catalogoMensagem?: T;
   automacaoLiberada?: T;
   waLimiteInicial?: T;
   waAumentoDiario?: T;

@@ -1,6 +1,6 @@
 'use client'
 
-import { useConfig, useFormModified } from '@payloadcms/ui'
+import { useConfig, useDocumentInfo, useFormModified } from '@payloadcms/ui'
 import { CircleCheck, CircleX, PlugZap } from 'lucide-react'
 import React, { useState } from 'react'
 
@@ -9,13 +9,15 @@ import './TestarConexao.css'
 type Alvo = 'ia' | 'whatsapp' | 'email'
 type Resultado = { ok: boolean; mensagem: string }
 
-const NOMES: Record<Alvo, string> = { ia: 'a IA', whatsapp: 'o WhatsApp', email: 'o e-mail' }
+const NOMES: Record<Alvo, string> = { ia: 'a IA', whatsapp: 'o WhatsApp', email: 'este e-mail' }
 
-// Botão "Testar conexão" de cada aba da Automação. Sem <form>: fica dentro do formulário do Payload.
+// Botão "Testar conexão": abas da Automação (IA, WhatsApp) e caixa de e-mail do usuário.
+// Sem <form>: fica dentro do formulário do Payload.
 export default function TestarConexao({ alvo }: { alvo: Alvo }) {
   const {
     config: { serverURL, routes },
   } = useConfig()
+  const { id } = useDocumentInfo()
   const modificado = useFormModified()
   const [testando, setTestando] = useState(false)
   const [resultado, setResultado] = useState<Resultado | null>(null)
@@ -24,7 +26,8 @@ export default function TestarConexao({ alvo }: { alvo: Alvo }) {
     setTestando(true)
     setResultado(null)
     try {
-      const r = await fetch(`${serverURL ?? ''}${routes.api}/globals/crm-automacao/testar`, {
+      const caminho = alvo === 'email' ? `/users/${id}/testar-email` : '/globals/crm-automacao/testar'
+      const r = await fetch(`${serverURL ?? ''}${routes.api}${caminho}`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -37,6 +40,10 @@ export default function TestarConexao({ alvo }: { alvo: Alvo }) {
     } finally {
       setTestando(false)
     }
+  }
+
+  if (alvo === 'email' && !id) {
+    return <p className="automacao-teste__aviso">Salve o usuário para poder testar o e-mail.</p>
   }
 
   return (
